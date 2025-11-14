@@ -1,0 +1,34 @@
+# Build artifacts
+release-package/
+*.zip
+
+# Old extraction tools (moved to separate repo)
+extract-global-ini.ps1
+tools/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Keep stock vanilla .ini files (don't ignore them!)
+!stock-global-ini/*.ini

@@ -1,8 +1,8 @@
 # ⚙️ Component Language Pack - Remix Edition
 
-> **📢 IMPORTANT:** This is a modified fork of the original [Component Language Pack by ExoAE](https://github.com/ExoAE/ScCompLangPack).
-> **All credit for the original language pack goes to [ExoAE](https://github.com/ExoAE).**
-> This remix was created using [Claude Code](https://claude.com/claude-code) to provide an alternative compact naming format.
+> **📢 IMPORTANT:** This language pack is built automatically from vanilla Star Citizen files using a compact naming transformation.
+> **Credit:** Original concept inspired by [ExoAE's Component Language Pack](https://github.com/ExoAE/ScCompLangPack).
+> This remix uses automated GitHub Actions to transform vanilla `global.ini` files into the compact format.
 
 ## 🎯 What's Different in This Remix?
 
@@ -45,6 +45,19 @@ This makes it easier to quickly scan and sort components by their stats at a gla
 3. Launch the game.
 
 **Note for manual downloads:** If you download files directly from the repository instead of using a release ZIP, **only copy the `data` folder and `user.cfg` file**. Do not include the `.claude` folder - it's only used for project maintenance and future updates.
+
+## 🤖 How Releases Are Built
+
+This language pack is built **automatically by GitHub Actions** from vanilla Star Citizen files:
+
+1. Vanilla `global.ini` files are extracted using [SC Global.ini Extractor](https://github.com/BeltaKoda/SC-GlobalIni-Extractor) and stored in `stock-global-ini/`
+2. When a new version tag is pushed (e.g., `v6`), GitHub Actions automatically:
+   - Finds the latest vanilla file
+   - Runs `build-language-pack.py` to transform component names to compact format
+   - Packages the result into a release ZIP
+   - Creates a GitHub Release
+
+**All builds are transparent and auditable** - you can view the [workflow runs](https://github.com/BeltaKoda/ScCompLangPackRemix/actions) to see exactly how each release was created.
 
 ## 🛠️ Create Your Own Language Pack
 

@@ -1,0 +1,97 @@
+name: Build and Release Language Pack
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v6, v7, etc.
+
+permissions:
+  contents: write  # Required to create releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Find latest vanilla global.ini
+      id: find_vanilla
+      run: |
+        # Find the most recent vanilla file (by filename sorting)
+        VANILLA_FILE=$(ls -1 stock-global-ini/StockGlobal-*.ini 2>/dev/null | sort -V | tail -1)
+
+        if [ -z "$VANILLA_FILE" ]; then
+          echo "Error: No vanilla global.ini files found in stock-global-ini/"
+          exit 1
+        fi
+
+        echo "Found vanilla file: $VANILLA_FILE"
+        echo "vanilla_file=$VANILLA_FILE" >> $GITHUB_OUTPUT
+
+        # Extract version for release notes
+        BASENAME=$(basename "$VANILLA_FILE" .ini)
+        echo "vanilla_basename=$BASENAME" >> $GITHUB_OUTPUT
+
+    - name: Build language pack
+      run: |
+        python3 build-language-pack.py \
+          "${{ steps.find_vanilla.outputs.vanilla_file }}" \
+          data/Localization/english/global.ini
+
+    - name: Create release package
+      run: |
+        mkdir -p release-package
+        cp -r data release-package/
+        cp user.cfg release-package/
+
+        cd release-package
+        zip -r ../ScCompLangPackRemix-${{ github.ref_name }}.zip data user.cfg
+        cd ..
+
+        ls -lh ScCompLangPackRemix-${{ github.ref_name }}.zip
+
+    - name: Create Release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        VANILLA_FILE="${{ steps.find_vanilla.outputs.vanilla_basename }}"
+
+        gh release create ${{ github.ref_name }} \
+          ScCompLangPackRemix-${{ github.ref_name }}.zip \
+          --title "ScCompLangPackRemix ${{ github.ref_name }}" \
+          --notes "## ScCompLangPackRemix ${{ github.ref_name }}
+
+        **Download:** \`ScCompLangPackRemix-${{ github.ref_name }}.zip\`
+
+        ### Installation
+
+        1. Extract the ZIP file
+        2. Copy the \`data\` folder and \`user.cfg\` file to your Star Citizen LIVE folder
+        3. Launch the game
+
+        ### What's in this release
+
+        - **Compact naming format** - Component names in \`[Type][Size][Quality] Name\` format
+        - Built from: \`$VANILLA_FILE\`
+
+        ### Format Examples
+
+        - \`M2A XL-1\` - Military, Size 2, Quality A
+        - \`I1B Eco-Flow\` - Industrial, Size 1, Quality B
+        - \`C1B Cryo-Star\` - Civilian, Size 1, Quality B
+        - \`R2B AbsoluteZero\` - Racing, Size 2, Quality B
+        - \`S2A NightFall\` - Stealth, Size 2, Quality A
+
+        ---
+
+        **Built automatically by GitHub Actions from commit:** ${{ github.sha }}
+
+        **Credit:** Original concept by [ExoAE](https://github.com/ExoAE/ScCompLangPack)
+        "
