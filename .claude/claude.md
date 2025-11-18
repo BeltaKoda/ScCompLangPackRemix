@@ -38,6 +38,32 @@ When a new Star Citizen patch is deployed, a new `global.ini` file is released b
 - New components that don't have remixed versions yet will remain in stock format until manually updated
 - Use Git tags to mark versions: version tags (4.3.2, 4.4.0) and environment tags (LIVE, PTU, HOTFIX)
 
+## Git Workflow
+
+### Commit and Push Policy
+
+**IMPORTANT:** All commits must be pushed to GitHub immediately after committing.
+
+**Standard workflow for feature branches:**
+1. Make changes
+2. Create commit with `git commit`
+3. **Immediately push to GitHub** with `git push origin [branch-name]`
+
+**Exception - Main branch:**
+- **ALWAYS** ask for user confirmation before committing to `main`
+- **ALWAYS** ask for user confirmation before pushing to `main`
+- This prevents accidental changes to the production branch
+
+**Example:**
+```bash
+# Feature branch - automatic push
+git commit -m "Add new feature"
+git push origin feature/my-feature  # ✅ Push immediately
+
+# Main branch - requires confirmation
+# ❌ Do NOT commit or push to main without explicit user approval
+```
+
 ## Release Process
 
 ### ZIP File Naming Convention
