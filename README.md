@@ -4,6 +4,18 @@
 > **All credit for the original language pack goes to [ExoAE](https://github.com/ExoAE).**
 > This remix was created using [Claude Code](https://claude.com/claude-code) to provide an alternative compact naming format.
 
+## 💡 Why Did I Make This?
+
+> [!TIP]
+> **Quick-scan ship components without the guesswork!**
+>
+> When you scan a ship, you want to know **immediately** if it has components worth looting - without having to:
+> - Spend time retrieving the ship
+> - Look up component names online
+> - Wonder if that component is Military A-grade or Civilian D-grade
+>
+> This remix puts the critical stats **first**, so you can make instant decisions while scanning. See `M2A` at the start? You know it's Military, Size 2, A-grade. Decision made. Move on or loot up!
+
 ## 🎯 What's Different in This Remix?
 
 This version uses a **compact naming format** that puts the important stats first:
@@ -29,8 +41,6 @@ The format is: **[Type][Size][Quality] [Component Name]**
 - `Cryo-Star` → `C1B Cryo-Star` (Civilian, Size 1, Quality B)
 - `AbsoluteZero` → `R2B AbsoluteZero` (Racing, Size 2, Quality B)
 - `NightFall` → `S2A NightFall` (Stealth, Size 2, Quality A)
-
-This makes it easier to quickly scan and sort components by their stats at a glance, which is my primary reason for this fork. I like to play 'self found', and I didn't want to waste time looting a ship that doesn't have components I want. This way, I can simply scan and move on.
 
 ## ⬇️ Download and install
 
