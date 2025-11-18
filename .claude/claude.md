@@ -1,5 +1,43 @@
 # ScCompLangPackRemix - Claude Code Project Guidelines
 
+## Repository Structure
+
+This repository uses a patch version-based structure:
+```
+/[VERSION]/[ENVIRONMENT]/
+  ├── data/
+  │   └── Localization/
+  │       └── english/
+  │           └── global.ini (remixed)
+  ├── user.cfg
+  └── stock-global.ini (original from CIG)
+```
+
+**Examples:**
+- `/4.3.2/LIVE/` - Current live version (patch 4.3.2)
+- `/4.4.0/PTU/` - PTU test version (patch 4.4.0)
+
+## Patch Update Workflow
+
+When a new Star Citizen patch is deployed, a new `global.ini` file is released by CIG containing all in-game items from that patch (new items, updated items, balance changes, etc.).
+
+**Process for updating to a new patch:**
+
+1. **Obtain new stock global.ini**: Extract the stock `global.ini` from the new patch's Data.p4k file
+2. **Save stock ini to repo**: Copy to `/[VERSION]/[ENVIRONMENT]/stock-global.ini` for reference
+3. **Run processing script**: Use `process-new-patch.py` to:
+   - Preserve all existing remixed component names from the current version
+   - Add new components in stock format (to be remixed manually or in future updates)
+   - Remove components that no longer exist in the game
+4. **Create version directory**: Place the processed files in `/[VERSION]/[ENVIRONMENT]/`
+5. **Manual remixing**: Review new components and apply remix format where metadata is available
+
+**Important Notes:**
+- When comparing components, match by ini KEY (e.g., `item_NameCOOL_AEGS_S01_Bracer`), not by component name
+- The stock global.ini has simple component names (e.g., "Bracer"), while the remix adds type/size/quality prefix (e.g., "M1C Bracer")
+- New components that don't have remixed versions yet will remain in stock format until manually updated
+- Use Git tags to mark versions: version tags (4.3.2, 4.4.0) and environment tags (LIVE, PTU, HOTFIX)
+
 ## Release Process
 
 ### ZIP File Naming Convention
@@ -28,9 +66,19 @@ The release ZIP file should contain **ONLY**:
 - Any development/project files
 
 ### Creating Release ZIP
-Use this command to create the release ZIP:
+
+**Note:** Release creation should be handled by GitHub Actions, not manually by Claude Code.
+
+For manual testing, use this command from within the version directory:
 ```bash
-powershell.exe -Command "Compress-Archive -Path data,user.cfg -DestinationPath ScCompLangPackRemix-v[VERSION].zip -Force"
+cd [VERSION]/[ENVIRONMENT]
+powershell.exe -Command "Compress-Archive -Path data,user.cfg -DestinationPath ../../ScCompLangPackRemix-[VERSION]-[ENVIRONMENT].zip -Force"
+```
+
+**Example:**
+```bash
+cd 4.4.0/PTU
+powershell.exe -Command "Compress-Archive -Path data,user.cfg -DestinationPath ../../ScCompLangPackRemix-4.4.0-PTU.zip -Force"
 ```
 
 ## Component Naming Convention
@@ -43,7 +91,7 @@ This project uses a compact naming format for Star Citizen ship components:
 - **M** = Military
 - **I** = Industrial
 - **C** = Civilian
-- **R** = Racing (Competition renamed to avoid conflict with Civilian)
+- **R** = Racing (NOTE: The in-game type is "Competition", but we use "R" for Racing to avoid conflict with Civilian's "C")
 - **S** = Stealth
 
 ### Size
