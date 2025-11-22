@@ -36,8 +36,14 @@ def apply_fixes():
     print("=" * 60)
 
     # 1. Setup paths
+    import argparse
+    parser = argparse.ArgumentParser(description='Star Citizen Language Pack Fixer')
+    parser.add_argument('--version', default='4.4.0', help='Game version (e.g., 4.4.0)')
+    parser.add_argument('--channel', default='PTU', help='Game channel (e.g., PTU, LIVE)')
+    args, _ = parser.parse_known_args()
+
     base_dir = Path(__file__).parent
-    ini_path = base_dir / "4.4.0" / "PTU" / "data" / "Localization" / "english" / "global.ini"
+    ini_path = base_dir / args.version / args.channel / "data" / "Localization" / "english" / "global.ini"
     
     if not ini_path.exists():
         print(f"Error: INI file not found at {ini_path}")

@@ -443,16 +443,22 @@ def main():
         if not unforge_dcb(dcb_file):
             return 1
     
+    # Parse arguments
+    import argparse
+    parser = argparse.ArgumentParser(description='Star Citizen Language Pack Auditor')
+    parser.add_argument('--version', default='4.4.0', help='Game version (e.g., 4.4.0)')
+    parser.add_argument('--channel', default='PTU', help='Game channel (e.g., PTU, LIVE)')
+    args, _ = parser.parse_known_args()
+
     # 5. Use language pack global.ini for name resolution
     print("\n[Phase 4] Loading localization data...")
     
     # Use the language pack's global.ini for name token resolution
-    # (It should have the same tokens as the game's file)
-    lang_pack_path = Path(__file__).parent / "4.4.0" / "PTU" / "data" / "Localization" / "english" / "global.ini"
+    lang_pack_path = Path(__file__).parent / args.version / args.channel / "data" / "Localization" / "english" / "global.ini"
     
     if not lang_pack_path.exists():
         print(f"ERROR: Language pack not found at {lang_pack_path}")
-        print("Please ensure your language pack is in the 4.4.0/PTU/data/Localization/english/ directory")
+        print(f"Please ensure your language pack is in the {args.version}/{args.channel}/data/Localization/english/ directory")
         return 1
     
     print(f"Using language pack at: {lang_pack_path}")
