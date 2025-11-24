@@ -63,6 +63,18 @@ This tool was created to make building this language pack easier, and it's now a
 
 **Note:** The extraction tool is currently in beta. If you encounter any issues with it, please report them in the [tool's issue tracker](https://github.com/BeltaKoda/SC-GlobalIni-Extractor/issues).
 
+## 🤖 Automation
+
+This repository includes a suite of automation tools to streamline the update process for new Star Citizen patches.
+
+**Key Features:**
+*   **Automated Extraction:** Extracts component data directly from `Data.p4k`.
+*   **Intelligent Auditing:** Scans the game data to identify component types (Military, Civilian, etc.) even when not explicitly labeled.
+*   **Auto-Fixing:** Automatically applies the naming convention (e.g., `M2A`) to the `global.ini`.
+
+**How to Run:**
+See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for detailed usage instructions.
+
 ## 📦 Stock Global.ini Files
 
 For reference and transparency, **stock (unmodified) `global.ini` files are included in this repository** for each patch version. You can find them at:
