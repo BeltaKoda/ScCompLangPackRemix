@@ -87,6 +87,9 @@ Starting with patch 4.7.0, radars are now included in the remix using the same *
 - `SNS-R6` → **`R1C SNS-R6`** (Competition, Size 1, Grade C)
 - `Hunter` → **`S1B Hunter`** (Stealth, Size 1, Grade B)
 
+> [!NOTE]
+> As of 4.7.0 PTU, radars are not yet lootable or player-swappable in-game, but CIG has added full component data for them — suggesting they may become swappable soon.
+
 ## ⬇️ Download and install
 
 **Download the latest version from the [Releases Page](https://github.com/joeydee1986/ScCompLangPackRemix/releases)**
