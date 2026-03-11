@@ -12,7 +12,7 @@ When a new Star Citizen patch is released, follow these steps:
 ```bash
 python scripts/extract_stock_ini.py --version [VERSION] --channel [CHANNEL]
 ```
-This uses `scdatatools` to extract `global.ini` directly from the local `Data.p4k` file. Works on both Linux and Windows.
+This extracts `global.ini` directly from the local `Data.p4k` file using the built-in P4K reader. Works on both Linux and Windows.
 
 **Manual alternative:**
 ```bash
@@ -62,8 +62,7 @@ All scripts use `scripts/config.py` for centralized path detection:
 
 ## Requirements
 - Python 3.10+
-- Extraction uses `unp4k.exe` via Wine on Linux (auto-detected from LUG Helper runner)
-  - `scdatatools` is used as primary method if available (requires Python <3.12)
-  - Falls back to Wine + unp4k.exe automatically
+- `zstandard` for P4K extraction: `pip install zstandard`
+- `pycryptodome` only if extracting encrypted P4K entries (rare): `pip install pycryptodome`
 - Avoid using complex text editing tools on the 9MB `global.ini`; always use specific Python processing scripts to avoid truncation or encoding errors.
 - Always use `utf-8-sig` when reading/writing Star Citizen INI files.

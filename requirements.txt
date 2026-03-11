@@ -1,3 +1,4 @@
-# Core workflow scripts have no external dependencies.
-# Optional: scdatatools for pure-Python P4K extraction (requires Python <3.12)
-# scdatatools
+# P4K extraction (Data.p4k reading)
+zstandard
+# Only needed if extracting encrypted P4K entries (rare)
+# pycryptodome

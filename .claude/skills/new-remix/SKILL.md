@@ -46,7 +46,7 @@ Run the extraction script to pull the fresh `global.ini` from the local Star Cit
 python scripts/extract_stock_ini.py --version [VERSION] --channel [CHANNEL]
 ```
 
-This uses `scdatatools` to read from `Data.p4k` directly. The SC install is auto-detected.
+This uses the built-in P4K reader to extract from `Data.p4k` directly. The SC install is auto-detected. Requires `zstandard` (`pip install zstandard`).
 
 If extraction fails (scdatatools not installed, Data.p4k not found, etc.), ask the user to provide a stock INI file manually:
 ```bash

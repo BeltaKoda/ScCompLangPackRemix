@@ -94,11 +94,6 @@ def get_remix_ini(version: str, channel: str) -> Path:
     return get_version_dir(version, channel) / "data" / "Localization" / "english" / "global.ini"
 
 
-def get_tools_dir() -> Path:
-    """Return the tools/ directory path."""
-    return REPO_ROOT / "tools"
-
-
 def get_latest_version() -> str | None:
     """Find the most recent version directory in the repo by sorting version strings."""
     versions = []

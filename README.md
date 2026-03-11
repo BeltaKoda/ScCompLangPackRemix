@@ -90,7 +90,7 @@ Want to create your own custom language pack? Use the **[SC Global.ini Extractor
 python scripts/extract_stock_ini.py --version 4.7.0 --channel LIVE
 ```
 
-On Linux (via [LUG Helper](https://github.com/starcitizen-lug/lug-helper)), the script auto-detects your Star Citizen installation in the Wine/Proton prefix and uses `unp4k.exe` through your LUG wine runner. No manual Wine configuration needed.
+The script uses a built-in P4K reader (pure Python) to extract directly from `Data.p4k`. On Linux (via [LUG Helper](https://github.com/starcitizen-lug/lug-helper)), the SC installation is auto-detected in the Wine/Proton prefix. Only dependency: `pip install zstandard`.
 
 ## 🤖 Automation
 
