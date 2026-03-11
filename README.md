@@ -67,6 +67,26 @@ Starting with patch 4.5.0, we have expanded the scope to include missiles, torpe
 > [!TIP]
 > **MFD Ready!** These tags are also applied to the "short" names used on your ship's MFD screens (e.g., `CS StrkFrc II`), giving you critical combat info at a glance.
 
+## 📡 Expanded Scope: Radars (v4.7.0+)
+
+Starting with patch 4.7.0, radars are now included in the remix using the same **[Type][Size][Grade]** prefix format as coolers, power plants, shields, and quantum drives.
+
+### Radar Manufacturers & Classes:
+| Prefix | Manufacturer | Class |
+|--------|-------------|-------|
+| **M** | Groupe Nouveau Paradigme (GNP) | Military |
+| **I** | Chimera Communications | Industrial |
+| **C** | WillsOp | Civilian |
+| **R** | Nav-E7 Gadgets | Competition |
+| **S** | Blue Triangle Inc. | Stealth |
+
+### Examples:
+- `Epier` → **`M2C Epier`** (Military, Size 2, Grade C)
+- `FullSpec` → **`I2A FullSpec`** (Industrial, Size 2, Grade A)
+- `Backlund` → **`C1B Backlund`** (Civilian, Size 1, Grade B)
+- `SNS-R6` → **`R1C SNS-R6`** (Competition, Size 1, Grade C)
+- `Hunter` → **`S1B Hunter`** (Stealth, Size 1, Grade B)
+
 ## ⬇️ Download and install
 
 **Download the latest version from the [Releases Page](https://github.com/joeydee1986/ScCompLangPackRemix/releases)**

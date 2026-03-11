@@ -123,6 +123,16 @@ List these for the user and explain the naming convention:
 - **Grade**: A=Best, B=Good, C=Average, D=Basic
 - **Ordnance**: IR=Infrared, EM=Electromagnetic, CS=CrossSection, B=Bomb
 
+**Component categories using [Type][Size][Grade] prefix:**
+Coolers, Power Plants, Quantum Drives, Shields, Radars
+
+**Radar manufacturers and classes (v4.7.0+):**
+- GRNP (Groupe Nouveau Paradigme) = Military
+- CHCO (Chimera Communications) = Industrial
+- WLOP (WillsOp) = Civilian
+- NAVE (Nav-E7 Gadgets) = Competition
+- BLTR (Blue Triangle Inc.) = Stealth
+
 ### Auto-Classifying New Components
 
 The `item_Desc` fields in the stock INI contain structured metadata that can be parsed to determine Size, Grade, Class, and Manufacturer without needing external sources:
