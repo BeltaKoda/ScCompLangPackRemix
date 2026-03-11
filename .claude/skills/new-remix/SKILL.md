@@ -29,7 +29,7 @@ Ask the user to confirm:
 
 Find the most recent existing version directory in the repo to use as the remix base:
 ```bash
-ls -d */LIVE */ PTU 2>/dev/null | sort -V | tail -5
+ls -d */LIVE */PTU 2>/dev/null | sort -V | tail -5
 ```
 
 Or use `scripts/config.py`:
@@ -69,15 +69,17 @@ This preserves all existing remixed names by INI key matching and adds new entri
 
 ## Step 5: Apply Custom Title Bar Branding
 
-Update `Frontend_PU_Version` with the confirmed branding string:
+Update `Frontend_PU_Version` with the confirmed branding string.
+
+**Note**: The INI key has a `,P` suffix: `Frontend_PU_Version,P=`. Use the update script with a substring match on `--old-string` and the full replacement line on `--new-string`:
 ```bash
 python scripts/update_version_string.py \
   --file [VERSION]/[CHANNEL]/data/Localization/english/global.ini \
-  --old-string "Frontend_PU_Version=" \
-  --new-string "Frontend_PU_Version=[CONFIRMED_BRANDING]"
+  --old-string "Frontend_PU_Version,P=" \
+  --new-string "Frontend_PU_Version,P=[CONFIRMED_BRANDING]"
 ```
 
-Or edit the line directly in the output INI.
+Or grep for the line and edit it directly in the output INI.
 
 ## Step 6: Show Changes Summary
 
@@ -121,12 +123,34 @@ List these for the user and explain the naming convention:
 - **Grade**: A=Best, B=Good, C=Average, D=Basic
 - **Ordnance**: IR=Infrared, EM=Electromagnetic, CS=CrossSection, B=Bomb
 
+### Auto-Classifying New Components
+
+The `item_Desc` fields in the stock INI contain structured metadata that can be parsed to determine Size, Grade, Class, and Manufacturer without needing external sources:
+```
+item_Desc_RADR_BLTR_S01_Hunter=Item Type: Radar\nManufacturer: Blue Triangle Inc.\nSize: 1\nGrade: B\nClass: Stealth\n\n...
+```
+
+Use these fields to auto-generate prefix suggestions for new components.
+
+### Watch for New Component Categories
+
+Not all component types have been remixed yet. If new `item_Name` keys appear for a category that has **never** been remixed (e.g., radars, missile racks, thrusters), flag them separately and ask the user whether to start remixing that category.
+
 ### Verification Sources (in order of preference)
 1. **erkul.games** — most up-to-date component database
 2. **finder.cstone.space** — reliable alternative
 3. **starcitizen.tools** — community wiki (may lag behind)
 
-## Step 9: Generate Manifest (Optional)
+## Step 9: Install to Local Game Directory
+
+Deploy the remix to the local SC installation for in-game testing:
+```bash
+python scripts/install_to_ptu.py --version [VERSION] --channel [CHANNEL]
+```
+
+This copies the merged `global.ini` into the SC game directory so the user can launch and verify in-game.
+
+## Step 10: Generate Manifest (Optional)
 
 If the user wants a component manifest document:
 ```bash
@@ -135,7 +159,9 @@ python scripts/generate_manifest.py --version [VERSION] --channel [CHANNEL]
 
 This creates `component_manifest_[VERSION]_[channel].md` with a table of all components and their remix status.
 
-## Step 10: Create GitHub Deploy Workflow
+## Step 11: Create GitHub Deploy Workflow (LIVE releases only)
+
+**Skip this step for PTU test builds.** Only needed when preparing a LIVE release.
 
 Copy and adapt an existing deploy workflow for the new version:
 ```bash
@@ -144,19 +170,29 @@ cp .github/workflows/deploy-[OLD_VERSION]-[channel].yml .github/workflows/deploy
 
 Then update the version references, tag name, and paths inside the new YAML file.
 
-## Step 11: Commit and Push
+## Step 12: Commit and Push
 
-Create a feature branch, commit all changes, and push:
+If not already on a feature branch, create one:
 ```bash
 git checkout -b feature/[VERSION]-[channel]
+```
+
+Commit all changes:
+```bash
 git add [VERSION]/ .github/workflows/deploy-[VERSION]-*.yml
 git commit -m "feat([VERSION]-[channel]): add remix for patch [VERSION]"
+```
+
+For **PTU test builds**: commit but do NOT push — wait for the user to verify in-game first.
+
+For **LIVE releases**: push immediately per repo rules:
+```bash
 git push origin feature/[VERSION]-[channel]
 ```
 
-**Per repo rules**: Feature branch commits are pushed immediately. Main branch commits require user confirmation.
+## Step 13: Create Release (LIVE releases only)
 
-## Step 12: Create Release
+**Skip this step for PTU test builds.**
 
 Ask the user if they want to trigger the release now. If yes:
 ```bash
