@@ -1,3 +1,3 @@
-playwright
-pytest-playwright
-scdatatools
+# Core workflow scripts have no external dependencies.
+# Optional: scdatatools for pure-Python P4K extraction (requires Python <3.12)
+# scdatatools

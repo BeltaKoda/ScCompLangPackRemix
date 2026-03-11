@@ -98,13 +98,13 @@ The release ZIP file should contain **ONLY**:
 For manual testing, use this command from within the version directory:
 ```bash
 cd [VERSION]/[ENVIRONMENT]
-powershell.exe -Command "Compress-Archive -Path data,user.cfg -DestinationPath ../../ScCompLangPackRemix-[VERSION]-[ENVIRONMENT].zip -Force"
+zip -r ../../ScCompLangPackRemix-[VERSION]-[ENVIRONMENT].zip data user.cfg
 ```
 
 **Example:**
 ```bash
 cd 4.4.0/PTU
-powershell.exe -Command "Compress-Archive -Path data,user.cfg -DestinationPath ../../ScCompLangPackRemix-4.4.0-PTU.zip -Force"
+zip -r ../../ScCompLangPackRemix-4.4.0-PTU.zip data user.cfg
 ```
 
 ## Component Naming Convention

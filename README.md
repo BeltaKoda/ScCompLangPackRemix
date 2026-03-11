@@ -83,11 +83,14 @@ Starting with patch 4.5.0, we have expanded the scope to include missiles, torpe
 
 ## 🛠️ Create Your Own Language Pack
 
-Want to create your own custom language pack? Use the **[SC Global.ini Extractor](https://github.com/BeltaKoda/SC-GlobalIni-Extractor)** to extract the vanilla `global.ini` file from Star Citizen, then modify it to your preferences!
+Want to create your own custom language pack? Use the **[SC Global.ini Extractor](https://github.com/BeltaKoda/SC-GlobalIni-Extractor)** (Windows GUI) or the built-in extraction script (cross-platform) to extract the vanilla `global.ini` file from Star Citizen, then modify it to your preferences!
 
-This tool was created to make building this language pack easier, and it's now available for the community to create their own custom packs.
+**Cross-platform extraction (Linux & Windows):**
+```bash
+python scripts/extract_stock_ini.py --version 4.7.0 --channel LIVE
+```
 
-**Note:** The extraction tool is currently in beta. If you encounter any issues with it, please report them in the [tool's issue tracker](https://github.com/BeltaKoda/SC-GlobalIni-Extractor/issues).
+On Linux (via [LUG Helper](https://github.com/starcitizen-lug/lug-helper)), the script auto-detects your Star Citizen installation in the Wine/Proton prefix and uses `unp4k.exe` through your LUG wine runner. No manual Wine configuration needed.
 
 ## 🤖 Automation
 

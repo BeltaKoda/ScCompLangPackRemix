@@ -1,0 +1,5 @@
+[paths]
+# Uncomment and set if Star Citizen is installed in a non-standard location.
+# On Linux (LUG Helper): ~/Games/star-citizen/drive_c/Program Files/Roberts Space Industries/StarCitizen
+# On Windows: C:\Program Files\Roberts Space Industries\StarCitizen
+# sc_base = /home/youruser/Games/star-citizen/drive_c/Program Files/Roberts Space Industries/StarCitizen

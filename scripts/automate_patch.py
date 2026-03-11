@@ -3,7 +3,7 @@ Star Citizen Language Pack Automation Tool
 
 This script orchestrates the entire process of updating the language pack for a new patch.
 It runs the following steps:
-1. Extraction: Extracts game data (Game.dcb, global.ini) using unp4k/unforge to a TEMP directory.
+1. Extraction: Extracts game data (Game.dcb, global.ini) using scdatatools.
 2. Audit: Scans for component naming discrepancies.
 3. Fix: Applies automated naming fixes to the global.ini.
 4. Deploy: Optionally deploys the fixed file to the game directory.
@@ -21,36 +21,38 @@ import argparse
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import get_repo_root, get_sc_install_path
+
 # Configuration
-SC_INSTALL_PATH = r"C:\Program Files\Roberts Space Industries\StarCitizen\LIVE"
-REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = get_repo_root()
 
 def run_step(script_name: str, description: str, args: list) -> bool:
     """Run a python script as a subprocess with arguments."""
     print(f"\n{'='*60}")
     print(f"STEP: {description}")
     print(f"{'='*60}")
-    
+
     script_path = REPO_ROOT / "scripts" / script_name
     if not script_path.exists():
         print(f"Error: Script {script_name} not found at {script_path}!")
         return False
-        
+
     cmd = [sys.executable, str(script_path)] + args
-    
+
     try:
         result = subprocess.run(
             cmd,
             cwd=str(REPO_ROOT),
             check=False
         )
-        
+
         if result.returncode != 0:
             print(f"Error: {script_name} failed with exit code {result.returncode}")
             return False
-            
+
         return True
-        
+
     except Exception as e:
         print(f"Error running {script_name}: {e}")
         return False
@@ -60,20 +62,22 @@ def deploy_file(version: str, channel: str):
     print(f"\n{'='*60}")
     print("STEP: Deploying to Game Directory")
     print(f"{'='*60}")
-    
+
     source_path = REPO_ROOT / version / channel / "data" / "Localization" / "english" / "global.ini"
-    
-    dest_dir = Path(SC_INSTALL_PATH) / "data" / "Localization" / "english"
+
+    sc_install = get_sc_install_path(channel)
+    if sc_install is None:
+        print(f"Error: Star Citizen {channel} installation not found")
+        print("Set sc_base in config.ini if installed in a non-standard location.")
+        return
+
+    dest_dir = sc_install / "data" / "Localization" / "english"
     dest_path = dest_dir / "global.ini"
-    
+
     if not source_path.exists():
         print(f"Error: Source file not found at {source_path}")
         return
-        
-    if not Path(SC_INSTALL_PATH).exists():
-        print(f"Error: Star Citizen installation not found at {SC_INSTALL_PATH}")
-        return
-        
+
     try:
         dest_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, dest_path)
@@ -86,7 +90,7 @@ def cleanup_temp(temp_dir: Path, auto_cleanup: bool):
     print(f"\n{'='*60}")
     print("STEP: Cleanup")
     print(f"{'='*60}")
-    
+
     if not temp_dir.exists():
         return
 
@@ -97,7 +101,7 @@ def cleanup_temp(temp_dir: Path, auto_cleanup: bool):
         print(f"Size: {get_dir_size_mb(temp_dir):.2f} MB")
         response = input("Do you want to delete this temporary data? (y/n): ").lower()
         should_delete = response == 'y'
-        
+
     if should_delete:
         print(f"Deleting {temp_dir}...")
         try:
@@ -130,36 +134,36 @@ def main():
     print("-------------------------------------")
     print(f"Target Version: {args.version}")
     print(f"Target Channel: {args.channel}")
-    
+
     # Create Temp Directory
     temp_dir = Path(tempfile.mkdtemp(prefix="ScCompLangPackRemix_"))
     print(f"Created temporary working directory: {temp_dir}")
-    
+
     try:
         # Construct args to pass to subprocesses
         sub_args = ['--version', args.version, '--channel', args.channel, '--extract-dir', str(temp_dir)]
-        
+
         # Step 1: Audit & Extraction (This script handles extraction if needed)
         if not run_step("audit_sc_native.py", "Extracting Data & Initial Audit", sub_args):
             print("Aborting due to failure in Step 1.")
             return
-            
+
         # Step 2: Apply Fixes
         if not run_step("apply_fixes.py", "Applying Naming Fixes", sub_args):
             print("Aborting due to failure in Step 2.")
             return
-            
+
         # Step 3: Final Verification
         if not run_step("audit_sc_native.py", "Verifying Fixes", sub_args):
             print("Warning: Final verification reported issues (check report).")
-        
+
         # Step 4: Deploy (Optional)
         if args.deploy:
             deploy_file(args.version, args.channel)
         else:
             print("\nSkipping deployment. Use --deploy to auto-install.")
             print(f"You can manually copy the file from: {args.version}/{args.channel}/data/Localization/english/global.ini")
-            
+
     finally:
         # Step 5: Cleanup
         cleanup_temp(temp_dir, args.auto_cleanup)
