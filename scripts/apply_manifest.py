@@ -1,16 +1,28 @@
 import csv
 import os
 import re
+import sys
+import argparse
 from pathlib import Path
 
-# Config
-REPO_ROOT = Path("c:/Github/ScCompLangPackRemix")
-STOCK_INI = REPO_ROOT / "4.6.0" / "LIVE" / "stock-global.ini"
-PTU_REMIX = REPO_ROOT / "4.6.0" / "PTU" / "data/Localization/english/global.ini"
-MANIFEST_CSV = REPO_ROOT / "dry_run_manifest_ptu.csv"
-OUTPUT_INI = REPO_ROOT / "4.6.0" / "LIVE" / "data" / "Localization" / "english" / "global.ini"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import get_repo_root, get_stock_ini, get_remix_ini
 
-BRANDING_VERSION = "4.6.0 - LIVE - BeltaKoda's ScCompLangPackRemix"
+parser = argparse.ArgumentParser(description="Apply manifest CSV data to generate a remixed INI")
+parser.add_argument("--version", default="4.6.0", help="Game version (e.g., 4.6.0)")
+parser.add_argument("--channel", default="LIVE", help="Target channel (LIVE, PTU)")
+parser.add_argument("--ref-channel", default="PTU", help="Reference channel for verified names")
+parser.add_argument("--manifest-csv", default=None, help="Path to manifest CSV file")
+parser.add_argument("--branding", default=None, help="Custom branding string for Frontend_PU_Version")
+args = parser.parse_args()
+
+REPO_ROOT = get_repo_root()
+STOCK_INI = get_stock_ini(args.version, args.channel)
+PTU_REMIX = get_remix_ini(args.version, args.ref_channel)
+MANIFEST_CSV = Path(args.manifest_csv) if args.manifest_csv else REPO_ROOT / "dry_run_manifest_ptu.csv"
+OUTPUT_INI = get_remix_ini(args.version, args.channel)
+
+BRANDING_VERSION = args.branding or f"{args.version} - {args.channel} - BeltaKoda's ScCompLangPackRemix"
 
 def load_ini(path):
     data = {}
@@ -31,7 +43,7 @@ def load_ini(path):
 def get_class_from_desc(key, stock_ini_data):
     desc_key = key.replace("Name", "Desc")
     desc = stock_ini_data.get(desc_key, "").lower()
-    
+
     if "military" in desc: return "Military"
     if "industrial" in desc: return "Industrial"
     if "stealth" in desc: return "Stealth"
@@ -53,7 +65,7 @@ def get_prefix(c_type, size, grade, c_class, tracking):
         if c_type == "GroundMissile":
             return f"G-{track_prefix}"
         return track_prefix
-    
+
     if c_type == "Bomb":
         return f"B{size}"
 
@@ -70,13 +82,13 @@ def get_prefix(c_type, size, grade, c_class, tracking):
 def main():
     print(f"Loading stock data from {STOCK_INI}...")
     stock_data = load_ini(STOCK_INI)
-    
-    print(f"Loading reference PTU data from {PTU_REMIX}...")
+
+    print(f"Loading reference data from {PTU_REMIX}...")
     ptu_data = load_ini(PTU_REMIX)
-    
+
     print(f"Processing manifest from {MANIFEST_CSV}...")
     final_data = stock_data.copy()
-    
+
     # Counter for stats
     counts = {"Verified": 0, "New/Ordnance": 0}
 
@@ -90,10 +102,10 @@ def main():
 
             stock_name = stock_data.get(key)
             if not stock_name: continue
-            
+
             ptu_name = ptu_data.get(key)
             is_ordnance = row['type'] in ["Missile", "Torpedo", "Bomb"]
-            
+
             # Derive prefix for any item meeting the criteria
             c_class = get_class_from_desc(key, stock_data)
             tracking = row.get('tracking', 'N/A')
@@ -106,13 +118,13 @@ def main():
             else:
                 # 2. Apply functional names to Main and Short names for Ordnance
                 final_data[key] = f"{prefix} {stock_name}"
-                
+
                 if is_ordnance:
                     short_key = f"{key}_short"
                     if short_key in stock_data:
                         stock_short = stock_data[short_key]
                         final_data[short_key] = f"{prefix} {stock_short}"
-                
+
                 counts["New/Ordnance"] += 1
 
     # 2.5 Handle Ground Missiles (GMISL) that might be missing from manifest
@@ -121,20 +133,20 @@ def main():
         if key.startswith("item_NameGMISL_") and not key.endswith("_short"):
             if key in final_data and final_data[key] != stock_data[key]:
                 continue # Already processed
-            
+
             # Infer tracking and size from key
             tracking = "N/A"
             if "_IR_" in key: tracking = "Infrared"
             elif "_EM_" in key: tracking = "Electromagnetic"
             elif "_CS_" in key: tracking = "CrossSection"
-            
+
             size_match = re.search(r'_S(\d+)_', key)
             size = size_match.group(1) if size_match else "0"
-            
+
             prefix = get_prefix("GroundMissile", size, "1", "Unknown", tracking)
             stock_name = stock_data[key]
             final_data[key] = f"{prefix} {stock_name}"
-            
+
             short_key = f"{key}_short"
             if short_key in stock_data:
                 final_data[short_key] = f"{prefix} {stock_data[short_key]}"
@@ -148,21 +160,21 @@ def main():
         if k.startswith("Frontend_PU_Version"):
             final_data[k] = BRANDING_VERSION
             branding_found = True
-    
+
     if not branding_found:
         final_data["Frontend_PU_Version"] = BRANDING_VERSION
 
     # 4. Save final INI
     print(f"Saving remixed INI to {OUTPUT_INI}...")
     OUTPUT_INI.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Write with utf-8-sig to match Star Citizen expectations
     with open(OUTPUT_INI, 'w', encoding='utf-8-sig') as f:
         for k, v in final_data.items():
             f.write(f"{k}={v}\n")
 
     print(f"Successfully applied manifest names.")
-    print(f" - Preserved {counts['Verified']} verified names from PTU.")
+    print(f" - Preserved {counts['Verified']} verified names from reference.")
     print(f" - Applied {counts['New/Ordnance']} new/functional names.")
 
 if __name__ == "__main__":

@@ -1,10 +1,16 @@
 import sys
 import os
+import argparse
 
-file_path = r"4.5.0/PTU/data/Localization/english/global.ini"
-# The target string as identified by Select-String
-target_substring = "Frontend_PU_Version=4.5.0 - ScCompLangPackRemix"
-replacement_string = "Frontend_PU_Version=4.5.0 - Engineering Gameplay PTU - ScCompLangPackRemix"
+parser = argparse.ArgumentParser(description="Find and replace a version string in a Star Citizen INI file")
+parser.add_argument("--file", required=True, help="Path to the INI file")
+parser.add_argument("--old-string", required=True, help="The target substring to find")
+parser.add_argument("--new-string", required=True, help="The replacement string")
+args = parser.parse_args()
+
+file_path = args.file
+target_substring = args.old_string
+replacement_string = args.new_string
 
 print(f"Processing {file_path}...")
 

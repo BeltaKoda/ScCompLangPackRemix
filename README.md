@@ -67,6 +67,29 @@ Starting with patch 4.5.0, we have expanded the scope to include missiles, torpe
 > [!TIP]
 > **MFD Ready!** These tags are also applied to the "short" names used on your ship's MFD screens (e.g., `CS StrkFrc II`), giving you critical combat info at a glance.
 
+## 📡 Expanded Scope: Radars (v4.7.0+)
+
+Starting with patch 4.7.0, radars are now included in the remix using the same **[Type][Size][Grade]** prefix format as coolers, power plants, shields, and quantum drives.
+
+### Radar Manufacturers & Classes:
+| Prefix | Manufacturer | Class |
+|--------|-------------|-------|
+| **M** | Groupe Nouveau Paradigme (GNP) | Military |
+| **I** | Chimera Communications | Industrial |
+| **C** | WillsOp | Civilian |
+| **R** | Nav-E7 Gadgets | Competition |
+| **S** | Blue Triangle Inc. | Stealth |
+
+### Examples:
+- `Epier` → **`M2C Epier`** (Military, Size 2, Grade C)
+- `FullSpec` → **`I2A FullSpec`** (Industrial, Size 2, Grade A)
+- `Backlund` → **`C1B Backlund`** (Civilian, Size 1, Grade B)
+- `SNS-R6` → **`R1C SNS-R6`** (Competition, Size 1, Grade C)
+- `Hunter` → **`S1B Hunter`** (Stealth, Size 1, Grade B)
+
+> [!NOTE]
+> As of 4.7.0 PTU, radars are not yet lootable or player-swappable in-game, but CIG has added full component data for them — suggesting they may become swappable soon.
+
 ## ⬇️ Download and install
 
 **Download the latest version from the [Releases Page](https://github.com/joeydee1986/ScCompLangPackRemix/releases)**
@@ -83,11 +106,14 @@ Starting with patch 4.5.0, we have expanded the scope to include missiles, torpe
 
 ## 🛠️ Create Your Own Language Pack
 
-Want to create your own custom language pack? Use the **[SC Global.ini Extractor](https://github.com/BeltaKoda/SC-GlobalIni-Extractor)** to extract the vanilla `global.ini` file from Star Citizen, then modify it to your preferences!
+Want to create your own custom language pack? Use the **[SC Global.ini Extractor](https://github.com/BeltaKoda/SC-GlobalIni-Extractor)** (Windows GUI) or the built-in extraction script (cross-platform) to extract the vanilla `global.ini` file from Star Citizen, then modify it to your preferences!
 
-This tool was created to make building this language pack easier, and it's now available for the community to create their own custom packs.
+**Cross-platform extraction (Linux & Windows):**
+```bash
+python scripts/extract_stock_ini.py --version 4.7.0 --channel LIVE
+```
 
-**Note:** The extraction tool is currently in beta. If you encounter any issues with it, please report them in the [tool's issue tracker](https://github.com/BeltaKoda/SC-GlobalIni-Extractor/issues).
+The script uses a built-in P4K reader (pure Python) to extract directly from `Data.p4k`. On Linux (via [LUG Helper](https://github.com/starcitizen-lug/lug-helper)), the SC installation is auto-detected in the Wine/Proton prefix. Only dependency: `pip install zstandard`.
 
 ## 🤖 Automation
 

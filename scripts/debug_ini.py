@@ -1,15 +1,20 @@
+import argparse
 
-import os
+parser = argparse.ArgumentParser(description="Search a Star Citizen INI file for specific terms")
+parser.add_argument("file", help="Path to the INI file to search")
+parser.add_argument("--terms", nargs="+", default=["Arctic", "XL-1", "QuadraCell", "item_Name"],
+                    help="Search terms (default: Arctic XL-1 QuadraCell item_Name)")
+args = parser.parse_args()
 
-file_path = r"c:\Github\ScCompLangPackRemix\4.4.0\PTU\data\Localization\english\global.ini"
+file_path = args.file
 
 print(f"Reading {file_path}...")
 
 try:
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, 'r', encoding='utf-8-sig') as f:
         lines = f.readlines()
 except UnicodeDecodeError:
-    print("UTF-8 failed, trying utf-16")
+    print("UTF-8-SIG failed, trying utf-16")
     with open(file_path, 'r', encoding='utf-16') as f:
         lines = f.readlines()
 except Exception as e:
@@ -18,9 +23,7 @@ except Exception as e:
 
 print(f"Read {len(lines)} lines.")
 
-search_terms = ["Arctic", "XL-1", "QuadraCell", "item_Name"]
-
-for term in search_terms:
+for term in args.terms:
     print(f"Searching for '{term}'...")
     count = 0
     for i, line in enumerate(lines):

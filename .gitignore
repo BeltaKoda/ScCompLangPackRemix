@@ -3,3 +3,6 @@ extracted_live/
 extracted_ptu/
 dry_run_manifest*.csv
 *.txt
+config.ini
+__pycache__/
+.venv/

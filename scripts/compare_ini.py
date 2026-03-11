@@ -1,6 +1,7 @@
 import sys
 import os
 import io
+import argparse
 
 # Ensure UTF-8 output for console
 if sys.stdout.encoding != 'utf-8':
@@ -11,7 +12,7 @@ def load_ini(file_path):
     if not os.path.exists(file_path):
         print(f"Error: {file_path} not found")
         return None
-    
+
     try:
         # Star Citizen INI files are typically UTF-8-SIG or UTF-8
         with open(file_path, 'r', encoding='utf-8-sig') as f:
@@ -50,10 +51,10 @@ def compare_inis(ptu_path, live_path):
         if key not in live_data:
             removed_keys.append(key)
 
-    print(f"Comparison: PTU vs LIVE")
+    print(f"Comparison: File A vs File B")
     print(f"----------------------")
-    print(f"New keys in LIVE ({len(new_keys)}):")
-    for k, v in new_keys: 
+    print(f"New keys in B ({len(new_keys)}):")
+    for k, v in new_keys:
         print(f"  + {k}={v}")
 
     print(f"\nChanged values ({len(changed_keys)}):")
@@ -65,6 +66,8 @@ def compare_inis(ptu_path, live_path):
         print(f"  - {k}")
 
 if __name__ == "__main__":
-    ptu_file = r"C:\SCExtractor\StockGlobal-4-5-0-PTU.ini"
-    live_file = r"C:\SCExtractor\StockGlobal-4-5-0-LIVE.ini"
-    compare_inis(ptu_file, live_file)
+    parser = argparse.ArgumentParser(description="Compare two Star Citizen INI files")
+    parser.add_argument("file_a", help="First INI file (e.g., old stock)")
+    parser.add_argument("file_b", help="Second INI file (e.g., new stock)")
+    args = parser.parse_args()
+    compare_inis(args.file_a, args.file_b)

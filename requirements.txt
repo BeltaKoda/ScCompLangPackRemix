@@ -1,3 +1,4 @@
-playwright
-pytest-playwright
-scdatatools
+# P4K extraction (Data.p4k reading)
+zstandard
+# Only needed if extracting encrypted P4K entries (rare)
+# pycryptodome
