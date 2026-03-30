@@ -79,32 +79,19 @@ def get_data_p4k(channel: str = "LIVE") -> Path | None:
     return p4k if p4k.exists() else None
 
 
-def get_version_dir(version: str, channel: str) -> Path:
-    """Return the version directory path (e.g., 4.7.0/LIVE/)."""
-    return REPO_ROOT / version / channel
+def get_channel_dir(channel: str) -> Path:
+    """Return the channel directory path (e.g., LIVE/, PTU/, HOTFIX/)."""
+    return REPO_ROOT / channel
 
 
-def get_stock_ini(version: str, channel: str) -> Path:
-    """Return the expected stock-global.ini path for a version/channel."""
-    return get_version_dir(version, channel) / "stock-global.ini"
+def get_stock_ini(channel: str) -> Path:
+    """Return the expected stock-global.ini path for a channel."""
+    return get_channel_dir(channel) / "stock-global.ini"
 
 
-def get_remix_ini(version: str, channel: str) -> Path:
-    """Return the remixed global.ini path for a version/channel."""
-    return get_version_dir(version, channel) / "data" / "Localization" / "english" / "global.ini"
-
-
-def get_latest_version() -> str | None:
-    """Find the most recent version directory in the repo by sorting version strings."""
-    versions = []
-    for d in REPO_ROOT.iterdir():
-        if d.is_dir() and d.name[0].isdigit() and "." in d.name:
-            versions.append(d.name)
-    if not versions:
-        return None
-    # Sort by version tuple
-    versions.sort(key=lambda v: tuple(int(x) for x in v.split(".")))
-    return versions[-1]
+def get_remix_ini(channel: str) -> Path:
+    """Return the remixed global.ini path for a channel."""
+    return get_channel_dir(channel) / "data" / "Localization" / "english" / "global.ini"
 
 
 if __name__ == "__main__":
@@ -116,4 +103,3 @@ if __name__ == "__main__":
     print(f"SC LIVE:      {get_sc_install_path('LIVE')}")
     print(f"SC PTU:       {get_sc_install_path('PTU')}")
     print(f"Data.p4k:     {get_data_p4k('LIVE')}")
-    print(f"Latest ver:   {get_latest_version()}")

@@ -8,11 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import get_repo_root, get_sc_install_path, get_remix_ini
 
 parser = argparse.ArgumentParser(description="Install remixed global.ini to Star Citizen game directory")
-parser.add_argument("--version", default="4.6.0", help="Game version (e.g., 4.6.0)")
-parser.add_argument("--channel", default="PTU", help="Channel to install to (LIVE, PTU)")
+parser.add_argument("--channel", default="LIVE", help="Channel to install to (LIVE, PTU, HOTFIX)")
 args = parser.parse_args()
 
-SOURCE_FILE = get_remix_ini(args.version, args.channel)
+SOURCE_FILE = get_remix_ini(args.channel)
 
 def install():
     print(f"Installing global.ini to {args.channel}...")

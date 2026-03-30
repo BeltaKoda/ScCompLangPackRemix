@@ -2,9 +2,9 @@
 
 ## Repository Structure
 
-This repository uses a patch version-based structure:
+This repository uses a channel-based structure:
 ```
-/[VERSION]/[ENVIRONMENT]/
+/[CHANNEL]/
   ├── data/
   │   └── Localization/
   │       └── english/
@@ -13,9 +13,14 @@ This repository uses a patch version-based structure:
   └── stock-global.ini (original from CIG)
 ```
 
+**Channels:** `LIVE`, `PTU`, `HOTFIX`
+
 **Examples:**
-- `/4.3.2/LIVE/` - Current live version (patch 4.3.2)
-- `/4.4.0/PTU/` - PTU test version (patch 4.4.0)
+- `/LIVE/` - Current live version
+- `/PTU/` - PTU test version
+
+Previous versions are archived in `archives/` and tracked via git tags.
+The current patch version is recorded inside `global.ini` in the `Frontend_PU_Version` key.
 
 ## Patch Update Workflow
 
@@ -24,19 +29,19 @@ When a new Star Citizen patch is deployed, a new `global.ini` file is released b
 **Process for updating to a new patch:**
 
 1. **Obtain new stock global.ini**: Extract the stock `global.ini` from the new patch's Data.p4k file
-2. **Save stock ini to repo**: Copy to `/[VERSION]/[ENVIRONMENT]/stock-global.ini` for reference
+2. **Save stock ini to repo**: Copy to `/[CHANNEL]/stock-global.ini` for reference
 3. **Run processing script**: Use `process-new-patch.py` to:
    - Preserve all existing remixed component names from the current version
    - Add new components in stock format (to be remixed manually or in future updates)
    - Remove components that no longer exist in the game
-4. **Create version directory**: Place the processed files in `/[VERSION]/[ENVIRONMENT]/`
-5. **Manual remixing**: Review new components and apply remix format where metadata is available
+4. **Manual remixing**: Review new components and apply remix format where metadata is available
 
 **Important Notes:**
 - When comparing components, match by ini KEY (e.g., `item_NameCOOL_AEGS_S01_Bracer`), not by component name
 - The stock global.ini has simple component names (e.g., "Bracer"), while the remix adds type/size/quality prefix (e.g., "M1C Bracer")
 - New components that don't have remixed versions yet will remain in stock format until manually updated
-- Use Git tags to mark versions: version tags (4.3.2, 4.4.0) and environment tags (LIVE, PTU, HOTFIX)
+- Use Git tags to mark versions (e.g., `4.7.0-LIVE`, `4.8.0-PTU`)
+- The patch version is tracked in `Frontend_PU_Version` inside global.ini, not in the folder structure
 
 ## Git Workflow
 
@@ -97,14 +102,14 @@ The release ZIP file should contain **ONLY**:
 
 For manual testing, use this command from within the version directory:
 ```bash
-cd [VERSION]/[ENVIRONMENT]
-zip -r ../../ScCompLangPackRemix-[VERSION]-[ENVIRONMENT].zip data user.cfg
+cd [CHANNEL]
+zip -r ../ScCompLangPackRemix-[VERSION]-[CHANNEL].zip data user.cfg
 ```
 
 **Example:**
 ```bash
-cd 4.4.0/PTU
-zip -r ../../ScCompLangPackRemix-4.4.0-PTU.zip data user.cfg
+cd LIVE
+zip -r ../ScCompLangPackRemix-4.7.0-LIVE.zip data user.cfg
 ```
 
 ## Component Naming Convention

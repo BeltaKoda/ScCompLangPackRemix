@@ -9,20 +9,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import get_repo_root, get_stock_ini, get_remix_ini
 
 parser = argparse.ArgumentParser(description="Apply manifest CSV data to generate a remixed INI")
-parser.add_argument("--version", default="4.6.0", help="Game version (e.g., 4.6.0)")
-parser.add_argument("--channel", default="LIVE", help="Target channel (LIVE, PTU)")
+parser.add_argument("--channel", default="LIVE", help="Target channel (LIVE, PTU, HOTFIX)")
 parser.add_argument("--ref-channel", default="PTU", help="Reference channel for verified names")
 parser.add_argument("--manifest-csv", default=None, help="Path to manifest CSV file")
 parser.add_argument("--branding", default=None, help="Custom branding string for Frontend_PU_Version")
 args = parser.parse_args()
 
 REPO_ROOT = get_repo_root()
-STOCK_INI = get_stock_ini(args.version, args.channel)
-PTU_REMIX = get_remix_ini(args.version, args.ref_channel)
+STOCK_INI = get_stock_ini(args.channel)
+PTU_REMIX = get_remix_ini(args.ref_channel)
 MANIFEST_CSV = Path(args.manifest_csv) if args.manifest_csv else REPO_ROOT / "dry_run_manifest_ptu.csv"
-OUTPUT_INI = get_remix_ini(args.version, args.channel)
+OUTPUT_INI = get_remix_ini(args.channel)
 
-BRANDING_VERSION = args.branding or f"{args.version} - {args.channel} - BeltaKoda's ScCompLangPackRemix"
+BRANDING_VERSION = args.branding or f"{args.channel} - BeltaKoda's ScCompLangPackRemix"
 
 def load_ini(path):
     data = {}

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Game version (e.g., 4.4.0)'
+        description: 'Game version for the release tag (e.g., 4.7.0)'
         required: true
         type: string
       environment:
@@ -28,18 +28,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify version directory exists
+      - name: Verify channel directory exists
         run: |
-          if [ ! -d "${{ inputs.version }}/${{ inputs.environment }}" ]; then
-            echo "Error: Directory ${{ inputs.version }}/${{ inputs.environment }} does not exist"
+          if [ ! -d "${{ inputs.environment }}" ]; then
+            echo "Error: Directory ${{ inputs.environment }} does not exist"
             exit 1
           fi
 
       - name: Create release ZIP
         run: |
-          cd ${{ inputs.version }}/${{ inputs.environment }}
-          zip -r ../../ScCompLangPackRemix-${{ inputs.version }}-${{ inputs.environment }}.zip data user.cfg
-          cd ../..
+          cd ${{ inputs.environment }}
+          zip -r ../ScCompLangPackRemix-${{ inputs.version }}-${{ inputs.environment }}.zip data user.cfg
+          cd ..
 
       - name: Verify ZIP contents
         run: |

@@ -9,18 +9,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import get_repo_root, get_stock_ini, get_remix_ini
 
 parser = argparse.ArgumentParser(description="Generate component manifest from CSV data")
-parser.add_argument("--version", default="4.6.0", help="Game version (e.g., 4.6.0)")
-parser.add_argument("--channel", default="LIVE", help="Target channel (LIVE, PTU)")
+parser.add_argument("--channel", default="LIVE", help="Target channel (LIVE, PTU, HOTFIX)")
 parser.add_argument("--ref-channel", default="PTU", help="Reference channel for verified names")
 parser.add_argument("--manifest-csv", default=None, help="Path to manifest CSV file")
 parser.add_argument("--output", default=None, help="Output markdown file path")
 args = parser.parse_args()
 
 REPO_ROOT = get_repo_root()
-STOCK_INI = get_stock_ini(args.version, args.channel)
-PTU_REMIX = get_remix_ini(args.version, args.ref_channel)
+STOCK_INI = get_stock_ini(args.channel)
+PTU_REMIX = get_remix_ini(args.ref_channel)
 MANIFEST_CSV = Path(args.manifest_csv) if args.manifest_csv else REPO_ROOT / "dry_run_manifest_ptu.csv"
-OUTPUT_MD = Path(args.output) if args.output else REPO_ROOT / f"component_manifest_{args.version}_{args.channel.lower()}.md"
+OUTPUT_MD = Path(args.output) if args.output else REPO_ROOT / f"component_manifest_{args.channel.lower()}.md"
 
 def load_ini(path):
     data = {}
@@ -130,8 +129,8 @@ def main():
     sorted_comps = sorted(components.values(), key=lambda x: (x['Type'], x['Size'], x['Stock']))
 
     with open(OUTPUT_MD, 'w', encoding='utf-8') as f:
-        f.write(f"# Component Manifest: {args.version} {args.channel}\n\n")
-        f.write(f"This table compares the **{args.version} {args.channel} Stock** with your **Verified {args.version} {args.ref_channel} Remix**.\n")
+        f.write(f"# Component Manifest: {args.channel}\n\n")
+        f.write(f"This table compares the **{args.channel} Stock** with your **Verified {args.ref_channel} Remix**.\n")
         f.write("Missiles and Torpedoes now use functional prefixes (**IR/EM/CS**) and Bombs use (**BOMB**).\n\n")
         f.write("| Type | S | G | Tracking | Class | Stock Name | Proposed Remix | Status |\n")
         f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")

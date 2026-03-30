@@ -347,8 +347,7 @@ def print_audit_report(results: Dict):
 def main():
     # Parse arguments FIRST (fixes pre-existing bug where extract_dir was used before definition)
     parser = argparse.ArgumentParser(description='Star Citizen Language Pack Auditor')
-    parser.add_argument('--version', default='4.4.0', help='Game version (e.g., 4.4.0)')
-    parser.add_argument('--channel', default='PTU', help='Game channel (e.g., PTU, LIVE)')
+    parser.add_argument('--channel', default='LIVE', help='Game channel (e.g., LIVE, PTU, HOTFIX)')
     parser.add_argument('--extract-dir', default=None, help='Directory to extract game data to')
     args, _ = parser.parse_known_args()
 
@@ -424,11 +423,11 @@ def main():
     # 5. Use language pack global.ini for name resolution
     print("\n[Phase 4] Loading localization data...")
 
-    lang_pack_path = REPO_ROOT / args.version / args.channel / "data" / "Localization" / "english" / "global.ini"
+    lang_pack_path = REPO_ROOT / args.channel / "data" / "Localization" / "english" / "global.ini"
 
     if not lang_pack_path.exists():
         print(f"ERROR: Language pack not found at {lang_pack_path}")
-        print(f"Please ensure your language pack is in the {args.version}/{args.channel}/data/Localization/english/ directory")
+        print(f"Please ensure your language pack is in the {args.channel}/data/Localization/english/ directory")
         return 1
 
     print(f"Using language pack at: {lang_pack_path}")

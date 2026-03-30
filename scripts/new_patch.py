@@ -4,13 +4,13 @@ Consolidated workflow for processing a new Star Citizen patch.
 
 Usage:
     # Full workflow — extract stock INI from Data.p4k and merge with previous remix:
-    python scripts/new_patch.py --version 4.7.0 --channel LIVE --old-version 4.6.0 --old-channel LIVE
+    python scripts/new_patch.py --channel LIVE --old-channel LIVE
 
     # Using a pre-downloaded stock INI:
-    python scripts/new_patch.py --version 4.7.0 --channel LIVE --old-version 4.6.0 --old-channel LIVE --stock-file /path/to/stock.ini
+    python scripts/new_patch.py --channel LIVE --stock-file /path/to/stock.ini
 
     # Specify custom title bar branding:
-    python scripts/new_patch.py --version 4.7.0 --channel LIVE --old-version 4.6.0 --old-channel LIVE --branding "4.7.0 LIVE - BeltaKoda's ScCompLangPackRemix"
+    python scripts/new_patch.py --channel LIVE --branding "4.7.0 LIVE - BeltaKoda's ScCompLangPackRemix"
 """
 
 import argparse
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import get_repo_root, get_version_dir, get_stock_ini, get_remix_ini, get_latest_version
+from config import get_repo_root, get_channel_dir, get_stock_ini, get_remix_ini
 
 REPO_ROOT = get_repo_root()
 SCRIPTS_DIR = REPO_ROOT / "scripts"
@@ -44,49 +44,35 @@ def run_script(script_name: str, args: list, description: str) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(description="Process a new Star Citizen patch")
-    parser.add_argument("--version", required=True, help="New patch version (e.g., 4.7.0)")
-    parser.add_argument("--channel", required=True, help="Channel: LIVE or PTU")
-    parser.add_argument("--old-version", default=None, help="Previous version to base remix on (auto-detected if omitted)")
+    parser.add_argument("--channel", required=True, help="Channel: LIVE, PTU, or HOTFIX")
     parser.add_argument("--old-channel", default=None, help="Previous channel (defaults to same as --channel)")
     parser.add_argument("--stock-file", type=Path, default=None, help="Path to pre-downloaded stock global.ini")
     parser.add_argument("--branding", default=None, help="Custom Frontend_PU_Version branding string")
     parser.add_argument("--skip-extract", action="store_true", help="Skip extraction (stock-global.ini must already exist)")
     args = parser.parse_args()
 
-    # Resolve old version
-    old_version = args.old_version or get_latest_version()
     old_channel = args.old_channel or args.channel
 
-    if old_version is None:
-        print("ERROR: Could not auto-detect previous version. Use --old-version.")
-        sys.exit(1)
-
-    if old_version == args.version and old_channel == args.channel:
-        print(f"WARNING: Old and new version/channel are the same ({old_version}/{old_channel}).")
-        print("This will effectively re-process the same version.")
-
-    print(f"New Patch:      {args.version} / {args.channel}")
-    print(f"Based On:       {old_version} / {old_channel}")
+    print(f"Channel:        {args.channel}")
+    print(f"Old Channel:    {old_channel}")
 
     # Verify old remix exists
-    old_remix_path = get_remix_ini(old_version, old_channel)
+    old_remix_path = get_remix_ini(old_channel)
     if not old_remix_path.exists():
         print(f"ERROR: Previous remix not found at {old_remix_path}")
         sys.exit(1)
 
     # Step 1: Obtain stock global.ini
-    stock_ini_path = get_stock_ini(args.version, args.channel)
+    stock_ini_path = get_stock_ini(args.channel)
 
     if not args.skip_extract:
         if args.stock_file:
             extract_args = [
-                "--version", args.version,
                 "--channel", args.channel,
                 "--local-file", str(args.stock_file),
             ]
         else:
             extract_args = [
-                "--version", args.version,
                 "--channel", args.channel,
             ]
 
@@ -100,7 +86,7 @@ def main():
         print(f"Using existing stock INI: {stock_ini_path}")
 
     # Step 2: Create directory structure
-    remix_path = get_remix_ini(args.version, args.channel)
+    remix_path = get_remix_ini(args.channel)
     remix_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Step 3: Run process-new-patch.py
@@ -132,17 +118,12 @@ def main():
             print(f"WARNING: Failed to apply branding: {e}")
 
     # Step 5: Show diff summary
-    old_stock_path = get_stock_ini(old_version, old_channel)
-    if old_stock_path.exists():
-        run_script("compare_ini.py", [str(old_stock_path), str(stock_ini_path)],
-                    "Step 3: Compare Stock INI Changes")
-
-    # Step 6: Copy user.cfg from previous version
-    old_user_cfg = get_version_dir(old_version, old_channel) / "user.cfg"
-    new_user_cfg = get_version_dir(args.version, args.channel) / "user.cfg"
-    if old_user_cfg.exists() and not new_user_cfg.exists():
-        shutil.copy2(old_user_cfg, new_user_cfg)
-        print(f"\nCopied user.cfg from {old_version}/{old_channel}")
+    # Compare old stock with new stock if both exist and channels differ
+    if old_channel != args.channel:
+        old_stock_path = get_stock_ini(old_channel)
+        if old_stock_path.exists():
+            run_script("compare_ini.py", [str(old_stock_path), str(stock_ini_path)],
+                        "Step 3: Compare Stock INI Changes")
 
     # Summary
     print(f"\n{'=' * 60}")
@@ -150,7 +131,7 @@ def main():
     print(f"{'=' * 60}")
     print(f"  Stock INI:   {stock_ini_path}")
     print(f"  Remix INI:   {remix_path}")
-    print(f"  user.cfg:    {new_user_cfg}")
+    print(f"  user.cfg:    {get_channel_dir(args.channel) / 'user.cfg'}")
     print()
     print("Next steps:")
     print("  1. Review new components — search for entries without remix prefixes")

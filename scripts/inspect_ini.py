@@ -1,6 +1,6 @@
 import sys
 
-file_path = r"4.5.0/PTU/data/Localization/english/global.ini"
+file_path = "LIVE/data/Localization/english/global.ini"
 
 try:
     with open(file_path, 'r', encoding='utf-8-sig') as f:

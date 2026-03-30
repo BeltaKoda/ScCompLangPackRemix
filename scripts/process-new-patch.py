@@ -29,11 +29,11 @@ def read_ini_file(file_path: Path) -> Dict[str, str]:
 
 def main():
     parser = argparse.ArgumentParser(description='Merge Star Citizen global.ini files.')
-    parser.add_argument('--old-remix', type=Path, default=Path('4.3.2/LIVE/data/Localization/english/global.ini'),
-                        help='Path to the previous version remixed global.ini')
-    parser.add_argument('--new-stock', type=Path, default=Path('4.4.0/PTU/stock-global.ini'),
-                        help='Path to the new version stock global.ini')
-    parser.add_argument('--output', type=Path, default=Path('4.4.0/PTU/data/Localization/english/global.ini'),
+    parser.add_argument('--old-remix', type=Path, default=Path('LIVE/data/Localization/english/global.ini'),
+                        help='Path to the previous remixed global.ini')
+    parser.add_argument('--new-stock', type=Path, default=Path('LIVE/stock-global.ini'),
+                        help='Path to the new stock global.ini')
+    parser.add_argument('--output', type=Path, default=Path('LIVE/data/Localization/english/global.ini'),
                         help='Path to save the merged global.ini')
 
     args = parser.parse_args()

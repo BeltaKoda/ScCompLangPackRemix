@@ -110,7 +110,7 @@ Want to create your own custom language pack? Use the **[SC Global.ini Extractor
 
 **Cross-platform extraction (Linux & Windows):**
 ```bash
-python scripts/extract_stock_ini.py --version 4.7.0 --channel LIVE
+python scripts/extract_stock_ini.py --channel LIVE
 ```
 
 The script uses a built-in P4K reader (pure Python) to extract directly from `Data.p4k`. On Linux (via [LUG Helper](https://github.com/starcitizen-lug/lug-helper)), the SC installation is auto-detected in the Wine/Proton prefix. Only dependency: `pip install zstandard`.
@@ -130,17 +130,29 @@ See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for detailed usage instructio
 
 ## 📦 Stock Global.ini Files
 
-For reference and transparency, **stock (unmodified) `global.ini` files are included in this repository** for each patch version. You can find them at:
+For reference and transparency, **stock (unmodified) `global.ini` files are included in this repository** for each channel. You can find them at:
 
 ```
-/[VERSION]/[ENVIRONMENT]/stock-global.ini
+/[CHANNEL]/stock-global.ini
 ```
 
 **Examples:**
-- `/4.3.2/LIVE/stock-global.ini` (if available)
-- `/4.4.0/PTU/stock-global.ini`
+- `/LIVE/stock-global.ini`
+- `/PTU/stock-global.ini`
+
+Previous versions are preserved in the `archives/` folder and in git history.
 
 These stock files were extracted using the **[SC Global.ini Extractor](https://github.com/BeltaKoda/SC-GlobalIni-Extractor)** tool. The extractor is compiled via GitHub Actions and includes everything it needs without requiring additional installation.
+
+## 🔄 Auto-Update URL
+
+The remixed `global.ini` is always available at a stable URL that doesn't change between patches:
+
+```
+https://raw.githubusercontent.com/BeltaKoda/ScCompLangPackRemix/refs/heads/main/LIVE/data/Localization/english/global.ini
+```
+
+This enables tools and scripts to automatically fetch the latest version without needing to know the current patch number.
 
 ## 🚧 Found an Error or Issue?
 

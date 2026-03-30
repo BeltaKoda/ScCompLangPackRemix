@@ -10,16 +10,16 @@ When a new Star Citizen patch is released, follow these steps:
 
 **Automated (recommended):**
 ```bash
-python scripts/extract_stock_ini.py --version [VERSION] --channel [CHANNEL]
+python scripts/extract_stock_ini.py --channel [CHANNEL]
 ```
 This extracts `global.ini` directly from the local `Data.p4k` file using the built-in P4K reader. Works on both Linux and Windows.
 
 **Manual alternative:**
 ```bash
-python scripts/extract_stock_ini.py --version [VERSION] --channel [CHANNEL] --local-file /path/to/stock-global.ini
+python scripts/extract_stock_ini.py --channel [CHANNEL] --local-file /path/to/stock-global.ini
 ```
 
-The stock file is saved to `[VERSION]/[CHANNEL]/stock-global.ini`.
+The stock file is saved to `[CHANNEL]/stock-global.ini`.
 
 ### 2. Identify Changes
 - Use `scripts/compare_ini.py` to compare the new stock INI with the previous version's stock INI:
@@ -34,7 +34,7 @@ The stock file is saved to `[VERSION]/[CHANNEL]/stock-global.ini`.
 - **Do NOT** crawl Game.dcb unless absolutely necessary for a major mapping update.
 - Use the consolidated workflow script:
   ```bash
-  python scripts/new_patch.py --version [VERSION] --channel [CHANNEL] --old-version [OLD_VERSION] --old-channel [OLD_CHANNEL]
+  python scripts/new_patch.py --channel [CHANNEL]
   ```
 - Or use `process-new-patch.py` directly:
     - **Update Version**: Set `Frontend_PU_Version` to the new patch title + `- ScCompLangPackRemix`.
@@ -44,7 +44,7 @@ The stock file is saved to `[VERSION]/[CHANNEL]/stock-global.ini`.
 ### 4. Deploy & Release
 - Install locally for testing:
   ```bash
-  python scripts/install_to_ptu.py --version [VERSION] --channel [CHANNEL]
+  python scripts/install_to_ptu.py --channel [CHANNEL]
   ```
 - Commit to a feature branch, merge to `main`.
 - Push to GitHub and create a Release/Pre-release via `create-release.yml` workflow.

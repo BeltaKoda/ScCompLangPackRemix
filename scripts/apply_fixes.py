@@ -125,14 +125,13 @@ def apply_fixes(libs_dir: Path, ini_path: Path, name_dict: Dict[str, str]):
 
 def main():
     parser = argparse.ArgumentParser(description="Apply naming fixes to Star Citizen language pack")
-    parser.add_argument("--version", default="4.6.0", help="Game version")
-    parser.add_argument("--channel", default="LIVE", help="Channel (LIVE, PTU)")
+    parser.add_argument("--channel", default="LIVE", help="Channel (LIVE, PTU, HOTFIX)")
     parser.add_argument("--extract-dir", default=None, help="Directory with extracted XML data")
     args, _ = parser.parse_known_args()
 
     extract_dir = Path(args.extract_dir) if args.extract_dir else REPO_ROOT / "extracted"
     libs_dir = extract_dir / "dcb" / "Data" / "libs"
-    ini_path = get_remix_ini(args.version, args.channel)
+    ini_path = get_remix_ini(args.channel)
 
     if not ini_path.exists():
         print(f"ERROR: INI file not found at {ini_path}")

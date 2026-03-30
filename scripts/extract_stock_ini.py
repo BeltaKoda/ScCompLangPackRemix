@@ -6,10 +6,10 @@ Uses a built-in P4K reader (no external dependencies beyond zstandard).
 
 Usage:
     # Auto-detect SC installation and extract:
-    python scripts/extract_stock_ini.py --version 4.7.0 --channel LIVE
+    python scripts/extract_stock_ini.py --channel LIVE
 
     # Provide a local file instead of extracting:
-    python scripts/extract_stock_ini.py --version 4.7.0 --channel LIVE --local-file /path/to/stock-global.ini
+    python scripts/extract_stock_ini.py --channel LIVE --local-file /path/to/stock-global.ini
 """
 
 import argparse
@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import get_data_p4k, get_version_dir
+from config import get_data_p4k, get_channel_dir
 
 
 TARGET_PATHS = [
@@ -80,15 +80,14 @@ def from_local_file(source: Path, output_path: Path) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(description="Extract stock global.ini for a new patch")
-    parser.add_argument("--version", required=True, help="Game version (e.g., 4.7.0)")
-    parser.add_argument("--channel", required=True, help="Channel: LIVE or PTU")
+    parser.add_argument("--channel", required=True, help="Channel: LIVE, PTU, or HOTFIX")
     parser.add_argument("--local-file", type=Path, default=None,
                         help="Path to a pre-downloaded stock global.ini (skips extraction)")
     parser.add_argument("--p4k-path", type=Path, default=None,
                         help="Override path to Data.p4k (auto-detected by default)")
     args = parser.parse_args()
 
-    output_path = get_version_dir(args.version, args.channel) / "stock-global.ini"
+    output_path = get_channel_dir(args.channel) / "stock-global.ini"
 
     if output_path.exists():
         print(f"WARNING: {output_path} already exists. It will be overwritten.")

@@ -10,7 +10,7 @@ It runs the following steps:
 5. Cleanup: Removes the temporary extraction directory.
 
 Usage:
-    python automate_patch.py [--version 4.5.0] [--channel PTU] [--deploy] [--auto-cleanup]
+    python automate_patch.py [--channel PTU] [--deploy] [--auto-cleanup]
 """
 
 import os
@@ -57,13 +57,13 @@ def run_step(script_name: str, description: str, args: list) -> bool:
         print(f"Error running {script_name}: {e}")
         return False
 
-def deploy_file(version: str, channel: str):
+def deploy_file(channel: str):
     """Deploy the fixed global.ini to the game directory."""
     print(f"\n{'='*60}")
     print("STEP: Deploying to Game Directory")
     print(f"{'='*60}")
 
-    source_path = REPO_ROOT / version / channel / "data" / "Localization" / "english" / "global.ini"
+    source_path = REPO_ROOT / channel / "data" / "Localization" / "english" / "global.ini"
 
     sc_install = get_sc_install_path(channel)
     if sc_install is None:
@@ -124,15 +124,13 @@ def get_dir_size_mb(path: Path) -> float:
 
 def main():
     parser = argparse.ArgumentParser(description='Star Citizen Language Pack Automation')
-    parser.add_argument('--version', default='4.4.0', help='Game version (e.g., 4.4.0)')
-    parser.add_argument('--channel', default='PTU', help='Game channel (e.g., PTU, LIVE)')
+    parser.add_argument('--channel', default='LIVE', help='Game channel (e.g., LIVE, PTU, HOTFIX)')
     parser.add_argument('--deploy', action='store_true', help='Deploy to game directory')
     parser.add_argument('--auto-cleanup', action='store_true', help='Automatically delete temp files without prompting')
     args = parser.parse_args()
 
     print("Star Citizen Language Pack Automation")
     print("-------------------------------------")
-    print(f"Target Version: {args.version}")
     print(f"Target Channel: {args.channel}")
 
     # Create Temp Directory
@@ -141,7 +139,7 @@ def main():
 
     try:
         # Construct args to pass to subprocesses
-        sub_args = ['--version', args.version, '--channel', args.channel, '--extract-dir', str(temp_dir)]
+        sub_args = ['--channel', args.channel, '--extract-dir', str(temp_dir)]
 
         # Step 1: Audit & Extraction (This script handles extraction if needed)
         if not run_step("audit_sc_native.py", "Extracting Data & Initial Audit", sub_args):
@@ -159,10 +157,10 @@ def main():
 
         # Step 4: Deploy (Optional)
         if args.deploy:
-            deploy_file(args.version, args.channel)
+            deploy_file(args.channel)
         else:
             print("\nSkipping deployment. Use --deploy to auto-install.")
-            print(f"You can manually copy the file from: {args.version}/{args.channel}/data/Localization/english/global.ini")
+            print(f"You can manually copy the file from: {args.channel}/data/Localization/english/global.ini")
 
     finally:
         # Step 5: Cleanup
