@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Star Citizen Mining Resources</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    line-height: 1.5;
+    padding: 1.5rem;
+    min-height: 100vh;
+  }
+
+  header {
+    max-width: 1200px;
+    margin: 0 auto 1.5rem;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    color: #58a6ff;
+    margin-bottom: 0.25rem;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    color: #8b949e;
+  }
+
+  header a { color: #58a6ff; text-decoration: none; }
+  header a:hover { text-decoration: underline; }
+
+  .controls {
+    max-width: 1200px;
+    margin: 0 auto 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .search-box {
+    flex: 1 1 280px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #c9d1d9;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+  }
+
+  .search-box::placeholder { color: #484f58; }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .filter-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    color: #8b949e;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover {
+    border-color: #58a6ff;
+    color: #c9d1d9;
+  }
+
+  .filter-btn.active {
+    background: #1f6feb;
+    border-color: #1f6feb;
+    color: #fff;
+  }
+
+  .status {
+    max-width: 1200px;
+    margin: 0 auto 0.5rem;
+    font-size: 0.8rem;
+    color: #8b949e;
+  }
+
+  .table-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: #161b22;
+    color: #58a6ff;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 2px solid #30363d;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  thead th:hover { color: #79c0ff; }
+
+  thead th .sort-arrow {
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+    opacity: 0.4;
+    font-size: 0.75em;
+  }
+
+  thead th.sorted .sort-arrow { opacity: 1; }
+
+  tbody tr {
+    border-bottom: 1px solid #21262d;
+    transition: background 0.1s;
+  }
+
+  tbody tr:nth-child(even) { background: rgba(22, 27, 34, 0.5); }
+  tbody tr:hover { background: rgba(88, 166, 255, 0.08); }
+
+  td {
+    padding: 0.5rem 0.75rem;
+    vertical-align: top;
+  }
+
+  td:first-child { font-weight: 500; color: #e6edf3; white-space: nowrap; }
+
+  td:nth-child(2) { white-space: nowrap; }
+
+  .type-ship { color: #7ee787; }
+  .type-rare { color: #f0883e; }
+  .type-pyro { color: #f85149; }
+  .type-hand { color: #d2a8ff; }
+  .type-ground { color: #79c0ff; }
+  .type-harvest { color: #56d364; }
+  .type-creature { color: #db61a2; }
+
+  mark {
+    background: rgba(210, 153, 34, 0.35);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 2rem;
+    color: #484f58;
+    font-style: italic;
+  }
+
+  footer {
+    max-width: 1200px;
+    margin: 1.5rem auto 0;
+    padding-top: 1rem;
+    border-top: 1px solid #21262d;
+    font-size: 0.8rem;
+    color: #484f58;
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    header h1 { font-size: 1.3rem; }
+    .controls { flex-direction: column; }
+    .search-box { width: 100%; }
+    td:first-child { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Star Citizen Mining Resources</h1>
+  <p>Data extracted from <code>global.ini</code> &mdash; StarMap descriptions &amp; Mining Compendium journal.
+    &nbsp;|&nbsp; <a href="https://github.com/BeltaKoda/ScCompLangPackRemix">ScCompLangPackRemix</a></p>
+</header>
+
+<div class="controls">
+  <input type="search" class="search-box" id="search" placeholder="Search resources, types, or locations..." autocomplete="off">
+  <div class="filters" id="filters"></div>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th data-col="resource">Resource <span class="sort-arrow"></span></th>
+        <th data-col="type">Type <span class="sort-arrow"></span></th>
+        <th data-col="locations">Locations <span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<footer>
+  Data source: Star Citizen global.ini (HOTFIX build, March 2026) &mdash; Planet/moon descriptions &amp; Mining Compendium journal
+</footer>
+
+<script>
+const RESOURCES = [
+  { resource: "Agricium", type: "Ship Mineable", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Aluminium", type: "Ship Mineable", locations: "Aaron Halo, Cellin, Yela, Stanton Lagrange Points, Pyro Asteroid Clusters" },
+  { resource: "Amiant Pod", type: "Harvestable", locations: "Bloom (Pyro III)" },
+  { resource: "Amioshi Plague", type: "Harvestable", locations: "All Moons/Planets (Caves)" },
+  { resource: "Aphorite", type: "Hand Mineable", locations: "All Moons/Planets/Caves" },
+  { resource: "Armillaria", type: "Harvestable", locations: "All Moons/Planets (Caves)" },
+  { resource: "Beradon", type: "Ground Vehicle Mineable", locations: "Pyro I, Bloom (Pyro III)" },
+  { resource: "Beryl", type: "Ship Mineable", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Bexalite", type: "Ship Mineable (Rare)", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Borase", type: "Ship Mineable", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Caranite", type: "Hand Mineable", locations: "Aberdeen, Daymar" },
+  { resource: "CompBoard", type: "Harvestable", locations: "Hurston" },
+  { resource: "Copper", type: "Ship Mineable", locations: "Aaron Halo, Aberdeen, Daymar, Stanton Lagrange Points, Pyro Asteroid Clusters" },
+  { resource: "Corundum", type: "Ship Mineable", locations: "Aaron Halo, Calliope, Clio, Euterpe, Lyria, microTech, Pyro Asteroid Clusters" },
+  { resource: "Decari Pod", type: "Harvestable", locations: "Pyro I" },
+  { resource: "Degnous Root", type: "Harvestable", locations: "Hurston" },
+  { resource: "Dolivine", type: "Hand Mineable", locations: "All Moons/Planets/Caves" },
+  { resource: "Feynmaline", type: "Ground Vehicle Mineable", locations: "Pyro IV" },
+  { resource: "Flareweed Stalk", type: "Harvestable", locations: "Bloom (Pyro III)" },
+  { resource: "Fotia Seedpod", type: "Harvestable", locations: "Pyro I" },
+  { resource: "Glacosite", type: "Ground Vehicle Mineable", locations: "Monox (Pyro II)" },
+  { resource: "Gold", type: "Ship Mineable (Rare)", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Golden Medmon", type: "Harvestable", locations: "Hurston, microTech" },
+  { resource: "Hadanite", type: "Hand Mineable", locations: "All Moons/Planets/Caves" },
+  { resource: "Heart of the Woods", type: "Harvestable", locations: "microTech" },
+  { resource: "Hephaestanite", type: "Ship Mineable", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Ice", type: "Ship Mineable", locations: "Outer Pyro Asteroids" },
+  { resource: "Iron", type: "Ship Mineable", locations: "Aaron Halo, Aberdeen, Arial, Daymar, Ita, Magda, Stanton Lagrange Points, Pyro Asteroid Clusters" },
+  { resource: "Janalite", type: "Hand Mineable", locations: "Daymar, Hurston, Ita, Magda Sand Caves, Wala (Caves)" },
+  { resource: "Juvenile Valakkar", type: "Creature", locations: "Hurston, Daymar" },
+  { resource: "Kopion", type: "Creature", locations: "Hurston, microTech" },
+  { resource: "Laranite", type: "Ship Mineable", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Lindinium", type: "Ship Mineable", locations: "Glaciem Ring" },
+  { resource: "Marok", type: "Creature", locations: "Hurston, microTech" },
+  { resource: "Pingala Seeds", type: "Harvestable", locations: "Monox (Pyro II)" },
+  { resource: "Pitambu", type: "Harvestable", locations: "Hurston, microTech" },
+  { resource: "Prota", type: "Harvestable", locations: "Hurston" },
+  { resource: "Quantanium", type: "Ship Mineable (Rare)", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Quartz", type: "Ship Mineable", locations: "Aaron Halo, Aberdeen, Arial, Calliope, Clio, Euterpe, Lyria, microTech, CRU-L5, ARC-L3, MIC-L4, Pyro Asteroid Clusters" },
+  { resource: "Quasigrazer", type: "Creature", locations: "microTech, Monox (Pyro II), Bloom (Pyro III), Pyro IV" },
+  { resource: "Ranta Dung", type: "Harvestable", locations: "All Moons/Planets (Caves)" },
+  { resource: "Revenant Pod", type: "Harvestable", locations: "Hurston" },
+  { resource: "Riccite", type: "Ship Mineable (Rare, Pyro Only)", locations: "Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Savrilium", type: "Ship Mineable", locations: "Glaciem Ring" },
+  { resource: "Sileteron", type: "Ship Mineable (Rare, Pyro Only)", locations: "Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Silicon", type: "Ship Mineable", locations: "Inner Pyro Asteroids" },
+  { resource: "Stone Bug Shell", type: "Harvestable", locations: "Daymar (Caves)" },
+  { resource: "Sunset Berry", type: "Harvestable", locations: "microTech" },
+  { resource: "Taranite", type: "Ship Mineable (Rare)", locations: "Aaron Halo, Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Yela, Lyria, Wala, microTech, Calliope, Clio, Euterpe, Stanton Lagrange Points, Pyro I, Monox, Bloom, Pyro IV, Ignis, Vatra, Adir, Fairo, Fuego, Vuur, Terminus, Pyro Asteroid Clusters" },
+  { resource: "Tin", type: "Ship Mineable", locations: "Bloom (Pyro III), Pyro IV" },
+  { resource: "Titanium", type: "Ship Mineable", locations: "Aaron Halo, Cellin, Daymar, Yela, Stanton Lagrange Points, Pyro Asteroid Clusters" },
+  { resource: "Torite", type: "Ship Mineable", locations: "Glaciem Ring" },
+  { resource: "Tungsten", type: "Ship Mineable", locations: "Aaron Halo, Lyria, Wala, CRU-L1, CRU-L2, CRU-L5, ARC-L3, MIC-L4, HUR-L3" },
+  { resource: "Wuotan Seeds", type: "Harvestable", locations: "Pyro I" }
+];
+
+const typeCategories = [
+  { label: "All", match: null },
+  { label: "Ship Mineable", match: "Ship Mineable" },
+  { label: "Hand Mineable", match: "Hand Mineable" },
+  { label: "Ground Vehicle", match: "Ground Vehicle Mineable" },
+  { label: "Harvestable", match: "Harvestable" },
+  { label: "Creature", match: "Creature" }
+];
+
+function getTypeClass(type) {
+  if (type.includes("Pyro Only")) return "type-pyro";
+  if (type.includes("Rare")) return "type-rare";
+  if (type.includes("Ship")) return "type-ship";
+  if (type.includes("Hand")) return "type-hand";
+  if (type.includes("Ground")) return "type-ground";
+  if (type.includes("Harvestable")) return "type-harvest";
+  if (type.includes("Creature")) return "type-creature";
+  return "";
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function highlight(text, query) {
+  if (!query) return escapeHtml(text);
+  const escaped = escapeHtml(text);
+  const re = new RegExp("(" + query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+  return escaped.replace(re, "<mark>$1</mark>");
+}
+
+let activeFilter = null;
+let sortCol = "resource";
+let sortAsc = true;
+let searchQuery = "";
+
+function getFiltered() {
+  let data = RESOURCES;
+  if (activeFilter) {
+    data = data.filter(r => r.type.includes(activeFilter));
+  }
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    data = data.filter(r =>
+      r.resource.toLowerCase().includes(q) ||
+      r.type.toLowerCase().includes(q) ||
+      r.locations.toLowerCase().includes(q)
+    );
+  }
+  data = [...data].sort((a, b) => {
+    const va = a[sortCol].toLowerCase();
+    const vb = b[sortCol].toLowerCase();
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+  return data;
+}
+
+function render() {
+  const tbody = document.getElementById("tbody");
+  const filtered = getFiltered();
+
+  document.getElementById("status").textContent =
+    filtered.length === RESOURCES.length
+      ? `Showing all ${RESOURCES.length} resources`
+      : `Showing ${filtered.length} of ${RESOURCES.length} resources`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="no-results">No matching resources found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const cls = getTypeClass(r.type);
+    return `<tr>
+      <td>${highlight(r.resource, searchQuery)}</td>
+      <td class="${cls}">${highlight(r.type, searchQuery)}</td>
+      <td>${highlight(r.locations, searchQuery)}</td>
+    </tr>`;
+  }).join("");
+}
+
+// Build filter buttons
+const filtersEl = document.getElementById("filters");
+typeCategories.forEach(cat => {
+  const btn = document.createElement("button");
+  btn.className = "filter-btn" + (cat.match === null ? " active" : "");
+  btn.textContent = cat.label;
+  btn.addEventListener("click", () => {
+    activeFilter = cat.match;
+    filtersEl.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    render();
+  });
+  filtersEl.appendChild(btn);
+});
+
+// Sort headers
+document.querySelectorAll("thead th").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    if (sortCol === col) {
+      sortAsc = !sortAsc;
+    } else {
+      sortCol = col;
+      sortAsc = true;
+    }
+    document.querySelectorAll("thead th").forEach(h => {
+      h.classList.remove("sorted");
+      h.querySelector(".sort-arrow").textContent = "";
+    });
+    th.classList.add("sorted");
+    th.querySelector(".sort-arrow").textContent = sortAsc ? "\u25B2" : "\u25BC";
+    render();
+  });
+});
+
+// Search
+let debounceTimer;
+document.getElementById("search").addEventListener("input", e => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    render();
+  }, 50);
+});
+
+// Initial render
+const resHeader = document.querySelector('th[data-col="resource"]');
+resHeader.classList.add("sorted");
+resHeader.querySelector(".sort-arrow").textContent = "\u25B2";
+render();
+</script>
+</body>
+</html>
