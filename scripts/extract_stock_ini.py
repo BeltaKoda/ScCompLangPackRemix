@@ -118,7 +118,7 @@ def main():
             pass
 
         print(f"\nStock INI saved to: {output_path}")
-        print(f"Next step: run process-new-patch.py to merge with previous remix.")
+        print(f"Next step: run apply_manifest.py to generate the remix.")
     else:
         print("\nERROR: Extraction failed.")
         print("You can provide a stock INI manually with --local-file")
