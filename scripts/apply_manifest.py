@@ -146,7 +146,17 @@ def main():
             final_data[k] = final_data[k].lower()
             counts["mission_item"] += 1
 
-    # 4. Apply Branding — append suffix to stock version string
+    # 4. Custom fixes (one-off name changes not covered by manifest)
+    custom_fixes = {
+        "items_commodities_hephaestanite": "Heph",
+        "items_commodities_hephaestanite_raw": "Heph (Raw)",
+    }
+    for k, v in custom_fixes.items():
+        if k in final_data:
+            final_data[k] = v
+    print(f"Applied {len(custom_fixes)} custom fixes.")
+
+    # 5. Apply Branding — append suffix to stock version string
     branding_suffix = BRANDING_VERSION
     branding_found = False
     for k in list(final_data.keys()):
