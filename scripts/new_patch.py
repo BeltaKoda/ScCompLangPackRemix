@@ -90,11 +90,14 @@ def main():
     remix_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Step 3: Run process-new-patch.py
+    old_stock_path = get_stock_ini(old_channel)
     merge_args = [
         "--old-remix", str(old_remix_path),
         "--new-stock", str(stock_ini_path),
         "--output", str(remix_path),
     ]
+    if old_stock_path.exists() and old_stock_path != stock_ini_path:
+        merge_args += ["--old-stock", str(old_stock_path)]
 
     if not run_script("process-new-patch.py", merge_args, "Step 2: Merge Old Remix + New Stock"):
         print("FAILED: Merge step failed")

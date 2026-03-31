@@ -33,6 +33,8 @@ def main():
                         help='Path to the previous remixed global.ini')
     parser.add_argument('--new-stock', type=Path, default=Path('LIVE/stock-global.ini'),
                         help='Path to the new stock global.ini')
+    parser.add_argument('--old-stock', type=Path, default=None,
+                        help='Path to the previous stock global.ini (used to detect intentional remixes)')
     parser.add_argument('--output', type=Path, default=Path('LIVE/data/Localization/english/global.ini'),
                         help='Path to save the merged global.ini')
 
@@ -40,11 +42,14 @@ def main():
 
     current_remix_path = args.old_remix
     new_stock_path = args.new_stock
+    old_stock_path = args.old_stock
     output_path = args.output
     output_dir = output_path.parent
 
     print(f"Old Remix: {current_remix_path}")
     print(f"New Stock: {new_stock_path}")
+    if old_stock_path:
+        print(f"Old Stock: {old_stock_path}")
     print(f"Output:    {output_path}")
 
     if not current_remix_path.exists():
@@ -60,11 +65,20 @@ def main():
     new_stock = read_ini_file(new_stock_path)
     print(f"  Loaded {len(new_stock)} entries")
 
+    old_stock = {}
+    if old_stock_path and old_stock_path.exists():
+        print("Reading old stock ini...")
+        old_stock = read_ini_file(old_stock_path)
+        print(f"  Loaded {len(old_stock)} entries")
+    elif old_stock_path:
+        print(f"Warning: Old stock file not found at {old_stock_path}, preserving all old remix values")
+
     # Process: start with new stock, overlay remixed values where keys match
     print("Processing entries...")
     new_remix = {}
     kept_remix_count = 0
     new_entry_count = 0
+    stale_count = 0
 
     # Keys to always take from new stock (do not preserve old remix value)
     force_new_keys = {
@@ -77,17 +91,29 @@ def main():
             new_remix[key] = f"{stock_value} - ScCompLangPackRemix"
             new_entry_count += 1
         elif key in current_remix and key not in force_new_keys:
-            # This key exists in the old remix, use the remixed value
-            new_remix[key] = current_remix[key]
-            # Check if it was actually remixed (different from stock)
-            if current_remix[key] != stock_value:
-                kept_remix_count += 1
+            if old_stock and key in old_stock:
+                # We can compare: was this key intentionally remixed?
+                if current_remix[key] != old_stock[key]:
+                    # Intentionally remixed — preserve the remix value
+                    new_remix[key] = current_remix[key]
+                    kept_remix_count += 1
+                else:
+                    # Never remixed, just carried forward — use new stock
+                    new_remix[key] = stock_value
+                    stale_count += 1
+            else:
+                # No old stock to compare — preserve old remix value (safe default)
+                new_remix[key] = current_remix[key]
+                if current_remix[key] != stock_value:
+                    kept_remix_count += 1
         else:
             # New key, keep stock value
             new_remix[key] = stock_value
             new_entry_count += 1
 
-    print(f"  Kept {kept_remix_count} existing remixed values")
+    print(f"  Kept {kept_remix_count} intentionally remixed values")
+    if stale_count:
+        print(f"  Replaced {stale_count} stale carry-forward values with new stock")
     print(f"  Added {new_entry_count} new stock entries")
     print(f"  Total entries: {len(new_remix)}")
 
