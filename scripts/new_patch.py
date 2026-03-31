@@ -56,12 +56,6 @@ def main():
     print(f"Channel:        {args.channel}")
     print(f"Old Channel:    {old_channel}")
 
-    # Verify old remix exists
-    old_remix_path = get_remix_ini(old_channel)
-    if not old_remix_path.exists():
-        print(f"ERROR: Previous remix not found at {old_remix_path}")
-        sys.exit(1)
-
     # Step 1: Obtain stock global.ini
     stock_ini_path = get_stock_ini(args.channel)
 
@@ -89,17 +83,16 @@ def main():
     remix_path = get_remix_ini(args.channel)
     remix_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Step 3: Run process-new-patch.py
-    old_stock_path = get_stock_ini(old_channel)
+    # Step 3: Run apply_manifest.py (fresh from stock, no carry-forward)
+    manifest_csv = REPO_ROOT / "dry_run_manifest_ptu.csv"
     merge_args = [
-        "--old-remix", str(old_remix_path),
-        "--new-stock", str(stock_ini_path),
-        "--output", str(remix_path),
+        "--channel", args.channel,
+        "--manifest-csv", str(manifest_csv),
     ]
-    if old_stock_path.exists() and old_stock_path != stock_ini_path:
-        merge_args += ["--old-stock", str(old_stock_path)]
+    if args.branding:
+        merge_args += ["--branding", args.branding]
 
-    if not run_script("process-new-patch.py", merge_args, "Step 2: Merge Old Remix + New Stock"):
+    if not run_script("apply_manifest.py", merge_args, "Step 2: Apply Manifest to Stock (Fresh)"):
         print("FAILED: Merge step failed")
         sys.exit(1)
 

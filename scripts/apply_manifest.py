@@ -10,14 +10,12 @@ from config import get_repo_root, get_stock_ini, get_remix_ini
 
 parser = argparse.ArgumentParser(description="Apply manifest CSV data to generate a remixed INI")
 parser.add_argument("--channel", default="LIVE", help="Target channel (LIVE, PTU, HOTFIX)")
-parser.add_argument("--ref-channel", default="PTU", help="Reference channel for verified names")
 parser.add_argument("--manifest-csv", default=None, help="Path to manifest CSV file")
 parser.add_argument("--branding", default=None, help="Custom branding string for Frontend_PU_Version")
 args = parser.parse_args()
 
 REPO_ROOT = get_repo_root()
 STOCK_INI = get_stock_ini(args.channel)
-PTU_REMIX = get_remix_ini(args.ref_channel)
 MANIFEST_CSV = Path(args.manifest_csv) if args.manifest_csv else REPO_ROOT / "dry_run_manifest_ptu.csv"
 OUTPUT_INI = get_remix_ini(args.channel)
 
@@ -82,14 +80,11 @@ def main():
     print(f"Loading stock data from {STOCK_INI}...")
     stock_data = load_ini(STOCK_INI)
 
-    print(f"Loading reference data from {PTU_REMIX}...")
-    ptu_data = load_ini(PTU_REMIX)
-
     print(f"Processing manifest from {MANIFEST_CSV}...")
     final_data = stock_data.copy()
 
     # Counter for stats
-    counts = {"Verified": 0, "New/Ordnance": 0}
+    counts = {"prefixed": 0, "mission_item": 0}
 
     with open(MANIFEST_CSV, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -102,29 +97,22 @@ def main():
             stock_name = stock_data.get(key)
             if not stock_name: continue
 
-            ptu_name = ptu_data.get(key)
             is_ordnance = row['type'] in ["Missile", "Torpedo", "Bomb"]
 
-            # Derive prefix for any item meeting the criteria
+            # Always derive prefix fresh from manifest metadata + stock name
             c_class = get_class_from_desc(key, stock_data)
             tracking = row.get('tracking', 'N/A')
             prefix = get_prefix(row['type'], row['size'], row['grade'], c_class, tracking)
 
-            if ptu_name and ptu_name != stock_name and not is_ordnance:
-                # Use the verified PTU remix for standard components
-                final_data[key] = ptu_name
-                counts["Verified"] += 1
-            else:
-                # 2. Apply functional names to Main and Short names for Ordnance
-                final_data[key] = f"{prefix} {stock_name}"
+            final_data[key] = f"{prefix} {stock_name}"
 
-                if is_ordnance:
-                    short_key = f"{key}_short"
-                    if short_key in stock_data:
-                        stock_short = stock_data[short_key]
-                        final_data[short_key] = f"{prefix} {stock_short}"
+            if is_ordnance:
+                short_key = f"{key}_short"
+                if short_key in stock_data:
+                    stock_short = stock_data[short_key]
+                    final_data[short_key] = f"{prefix} {stock_short}"
 
-                counts["New/Ordnance"] += 1
+            counts["prefixed"] += 1
 
     # 2.5 Handle Ground Missiles (GMISL) that might be missing from manifest
     print("Checking for Ground Missiles (GMISL)...")
@@ -149,21 +137,32 @@ def main():
             short_key = f"{key}_short"
             if short_key in stock_data:
                 final_data[short_key] = f"{prefix} {stock_data[short_key]}"
-            counts["New/Ordnance"] += 1
+            counts["prefixed"] += 1
 
-    # 3. Apply Branding
-    print(f"Applying branding: {BRANDING_VERSION}")
-    # Update both the plain key and the ,P variant if they exist
+    # 3. Lowercase mission_item_* values
+    print("Lowercasing mission_item_* values...")
+    for k in list(final_data.keys()):
+        if k.startswith("mission_item_"):
+            final_data[k] = final_data[k].lower()
+            counts["mission_item"] += 1
+
+    # 4. Apply Branding — append suffix to stock version string
+    branding_suffix = BRANDING_VERSION
     branding_found = False
     for k in list(final_data.keys()):
         if k.startswith("Frontend_PU_Version"):
-            final_data[k] = BRANDING_VERSION
+            stock_version = stock_data.get(k, "")
+            if stock_version:
+                final_data[k] = f"{stock_version} - {branding_suffix}"
+            else:
+                final_data[k] = branding_suffix
             branding_found = True
+    print(f"Applying branding: {final_data.get('Frontend_PU_Version', branding_suffix)}")
 
     if not branding_found:
-        final_data["Frontend_PU_Version"] = BRANDING_VERSION
+        final_data["Frontend_PU_Version"] = branding_suffix
 
-    # 4. Save final INI
+    # 5. Save final INI
     print(f"Saving remixed INI to {OUTPUT_INI}...")
     OUTPUT_INI.parent.mkdir(parents=True, exist_ok=True)
 
@@ -172,9 +171,10 @@ def main():
         for k, v in final_data.items():
             f.write(f"{k}={v}\n")
 
-    print(f"Successfully applied manifest names.")
-    print(f" - Preserved {counts['Verified']} verified names from reference.")
-    print(f" - Applied {counts['New/Ordnance']} new/functional names.")
+    print(f"Successfully generated fresh remix from stock.")
+    print(f" - Prefixed {counts['prefixed']} component names from manifest.")
+    print(f" - Lowercased {counts['mission_item']} mission_item values.")
+    print(f" - Applied ground missile prefixes.")
 
 if __name__ == "__main__":
     main()
