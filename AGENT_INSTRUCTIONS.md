@@ -64,5 +64,14 @@ All scripts use `scripts/config.py` for centralized path detection:
 - Python 3.10+
 - `zstandard` for P4K extraction: `pip install zstandard`
 - `pycryptodome` only if extracting encrypted P4K entries (rare): `pip install pycryptodome`
+- `wine` for DCB-to-XML conversion (runs `tools/unforge.exe` via Wine)
 - Avoid using complex text editing tools on the 9MB `global.ini`; always use specific Python processing scripts to avoid truncation or encoding errors.
 - Always use `utf-8-sig` when reading/writing Star Citizen INI files.
+
+## Extraction Pipeline
+The component data extraction uses a two-stage pipeline:
+1. **P4K → DCB**: Built-in `scripts/p4k_reader.py` extracts Game2.dcb from Data.p4k (no external dependencies beyond zstandard)
+2. **DCB → XML**: `tools/unforge.exe` via Wine converts the DataForge binary to component XMLs
+3. **XML → Manifest CSV**: `scripts/dry_run_live.py` or `scripts/dry_run_ptu.py` parses the XMLs and generates the manifest
+
+**Important**: Always extract fresh from the current game's Data.p4k before building a remix. CIG changes component types and metadata with each patch. Never rely on stale extracted data or static CSV files.

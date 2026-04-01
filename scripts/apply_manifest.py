@@ -150,6 +150,8 @@ def main():
     custom_fixes = {
         "items_commodities_hephaestanite": "Heph",
         "items_commodities_hephaestanite_raw": "Heph (Raw)",
+        # BroadspecLite: XML is S02 but INI key is S01 — CIG naming mismatch, no XML match
+        "item_Name_RADR_CHCO_S01_BroadspecLite": "I1B Broadspec-Lite",
     }
     for k, v in custom_fixes.items():
         if k in final_data:

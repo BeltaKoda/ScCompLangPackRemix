@@ -23,55 +23,62 @@ def track_step(name, func, *args, **kwargs):
     return result, duration
 
 def extract_dcb():
+    """Extract Game2.dcb from Data.p4k using the built-in P4K reader."""
     p4k_path = get_data_p4k("PTU")
     if p4k_path is None:
         print("ERROR: Data.p4k not found for PTU channel")
         return False
 
-    try:
-        from scdatatools.p4k import P4KFile
-    except ImportError:
-        print("ERROR: scdatatools not installed. Install with: pip install scdatatools")
-        return False
+    from p4k_reader import P4KFile
 
-    output_dir = EXTRACT_DIR / "dcb"
+    output_dir = EXTRACT_DIR / "dcb" / "Data"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    p4k = P4KFile(str(p4k_path))
+    print(f"Opening {p4k_path}...")
+    p4k = P4KFile(p4k_path)
+    print(f"Loaded {len(p4k.entries):,} entries from P4K")
 
     for dcb_name in ["Data/Game2.dcb", "Data/Game.dcb"]:
-        matching = [f for f in p4k.filelist if dcb_name.lower() in f.filename.lower()]
-        if matching:
-            data = p4k.read(matching[0])
-            out_path = output_dir / matching[0].filename
-            out_path.parent.mkdir(parents=True, exist_ok=True)
+        entry = p4k.find(dcb_name)
+        if entry:
+            print(f"Found: {entry.filename} ({entry.file_size:,} bytes)")
+            out_path = output_dir / Path(dcb_name).name
+            data = p4k.read(entry)
             with open(out_path, "wb") as out:
                 out.write(data)
-            print(f"Extracted: {matching[0].filename}")
+            print(f"Extracted to {out_path}")
             return True
 
     print("ERROR: Could not find Game2.dcb or Game.dcb in Data.p4k")
     return False
 
 def convert_dcb():
+    """Convert Game2.dcb to XML using unforge.exe via Wine."""
     dcb_file = EXTRACT_DIR / "dcb" / "Data" / "Game2.dcb"
     if not dcb_file.exists():
         dcb_file = EXTRACT_DIR / "dcb" / "Data" / "Game.dcb"
 
     if not dcb_file.exists():
+        print(f"ERROR: No DCB file found")
         return False
 
-    try:
-        from scdatatools.forge import DataCoreBinary
-        dcb = DataCoreBinary(dcb_file)
-        dcb.dump_to(EXTRACT_DIR / "dcb" / "Data")
-        return True
-    except ImportError:
-        print("ERROR: scdatatools not installed")
+    unforge = REPO_ROOT / "tools" / "unforge.exe"
+    if not unforge.exists():
+        print(f"ERROR: unforge.exe not found at {unforge}")
         return False
-    except Exception as e:
-        print(f"ERROR: DCB conversion failed: {e}")
+
+    import subprocess
+    print(f"Converting {dcb_file.name} with unforge.exe via Wine...")
+    result = subprocess.run(
+        ["wine", str(unforge), str(dcb_file)],
+        capture_output=True, text=True, timeout=600
+    )
+    if result.returncode != 0:
+        print(f"ERROR: unforge.exe failed: {result.stderr[:500]}")
         return False
+
+    print("Conversion complete.")
+    return True
 
 def parse_xmls():
     libs_dir = EXTRACT_DIR / "dcb" / "Data" / "libs"
@@ -86,6 +93,7 @@ def parse_xmls():
         scitem_root / "ships" / "cooler",
         scitem_root / "ships" / "shieldgenerator",
         scitem_root / "ships" / "quantumdrive",
+        scitem_root / "ships" / "radar",
         scitem_root / "ships" / "weapons"
     ]
 

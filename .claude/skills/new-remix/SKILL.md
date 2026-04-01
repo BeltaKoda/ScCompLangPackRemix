@@ -43,31 +43,55 @@ Confirm with the user which previous version/channel to base the new remix on.
 
 Run the extraction script to pull the fresh `global.ini` from the local Star Citizen installation:
 ```bash
-python scripts/extract_stock_ini.py --version [VERSION] --channel [CHANNEL]
+python scripts/extract_stock_ini.py --channel [CHANNEL]
 ```
 
 This uses the built-in P4K reader to extract from `Data.p4k` directly. The SC install is auto-detected. Requires `zstandard` (`pip install zstandard`).
 
-If extraction fails (scdatatools not installed, Data.p4k not found, etc.), ask the user to provide a stock INI file manually:
+If extraction fails, ask the user to provide a stock INI file manually:
 ```bash
-python scripts/extract_stock_ini.py --version [VERSION] --channel [CHANNEL] --local-file /path/to/stock.ini
+python scripts/extract_stock_ini.py --channel [CHANNEL] --local-file /path/to/stock.ini
 ```
 
-Verify the output: `[VERSION]/[CHANNEL]/stock-global.ini` should exist and contain key=value pairs.
+Verify the output: `[CHANNEL]/stock-global.ini` should exist and contain key=value pairs.
 
-## Step 4: Run the Merge
+## Step 4: Extract Component Data from Game Files
 
-Execute the core merge script to combine the previous remix with the new stock data:
+**IMPORTANT:** Always extract fresh component data from the current game's Data.p4k. Never rely on stale extracted data or static CSV files — CIG changes component types and metadata with each patch.
+
+The extraction pipeline uses the built-in P4K reader + Wine/unforge.exe:
+
 ```bash
-python scripts/process-new-patch.py \
-  --old-remix [OLD_VERSION]/[OLD_CHANNEL]/data/Localization/english/global.ini \
-  --new-stock [VERSION]/[CHANNEL]/stock-global.ini \
-  --output [VERSION]/[CHANNEL]/data/Localization/english/global.ini
+python scripts/dry_run_live.py    # For LIVE channel
+python scripts/dry_run_ptu.py     # For PTU channel
 ```
 
-This preserves all existing remixed names by INI key matching and adds new entries in stock format.
+This runs three steps:
+1. **Extract** Game2.dcb from Data.p4k using the built-in `scripts/p4k_reader.py`
+2. **Convert** Game2.dcb to XML using `tools/unforge.exe` via Wine
+3. **Parse** component XMLs to generate `dry_run_manifest.csv` (LIVE) or `dry_run_manifest_ptu.csv` (PTU)
 
-## Step 5: Apply Custom Title Bar Branding
+Requirements: `zstandard` (for P4K reading), `wine` (for unforge.exe DCB conversion)
+
+The manifest CSV contains component metadata (key, size, grade, type, tracking) extracted directly from the game's DataForge binary. Check the output for radar, shield, cooler, power plant, quantum drive, and weapon entries.
+
+## Step 5: Apply the Remix
+
+Generate the remix fresh from stock — no carry-forward from previous versions:
+```bash
+python scripts/apply_manifest.py --channel [CHANNEL] --manifest-csv dry_run_manifest.csv
+```
+
+This starts from the stock global.ini and applies:
+- Component prefixes from the manifest CSV (size/grade/class from game data)
+- Ground missile prefixes (inferred from INI keys)
+- mission_item_* lowercasing
+- Custom fixes (Heph abbreviation, etc.)
+- Version branding
+
+The remix is **never** based on the previous version's remix — it always starts fresh from stock to prevent stale data carry-forward.
+
+## Step 6: Apply Custom Title Bar Branding
 
 Update `Frontend_PU_Version` with the confirmed branding string.
 
@@ -81,7 +105,7 @@ python scripts/update_version_string.py \
 
 Or grep for the line and edit it directly in the output INI.
 
-## Step 6: Show Changes Summary
+## Step 7: Show Changes Summary
 
 Compare the old and new stock INIs to identify what changed:
 ```bash
@@ -96,14 +120,14 @@ Report to the user:
 - How many values changed
 - Specifically highlight new `item_Name` keys (new components needing remix)
 
-## Step 7: Copy user.cfg
+## Step 8: Copy user.cfg
 
 Copy the `user.cfg` from the previous version if it doesn't already exist:
 ```bash
 cp [OLD_VERSION]/[OLD_CHANNEL]/user.cfg [VERSION]/[CHANNEL]/user.cfg
 ```
 
-## Step 8: Identify Components Needing Remix
+## Step 9: Identify Components Needing Remix
 
 Search the new remix INI for component entries that still have stock (un-remixed) names.
 A remixed entry has a prefix like `M2A`, `I1B`, `C3D`, `R2B`, `S1A`, `IR`, `EM`, `CS`, `B10`, `G-IR`, etc.
@@ -151,7 +175,7 @@ Not all component types have been remixed yet. If new `item_Name` keys appear fo
 2. **finder.cstone.space** — reliable alternative
 3. **starcitizen.tools** — community wiki (may lag behind)
 
-## Step 9: Install to Local Game Directory
+## Step 10: Install to Local Game Directory
 
 Deploy the remix to the local SC installation for in-game testing:
 ```bash
@@ -160,7 +184,7 @@ python scripts/install_to_ptu.py --version [VERSION] --channel [CHANNEL]
 
 This copies the merged `global.ini` into the SC game directory so the user can launch and verify in-game.
 
-## Step 10: Generate Manifest (Optional)
+## Step 11: Generate Manifest (Optional)
 
 If the user wants a component manifest document:
 ```bash
@@ -169,7 +193,7 @@ python scripts/generate_manifest.py --version [VERSION] --channel [CHANNEL]
 
 This creates `component_manifest_[VERSION]_[channel].md` with a table of all components and their remix status.
 
-## Step 11: Create GitHub Deploy Workflow (LIVE releases only)
+## Step 12: Create GitHub Deploy Workflow (LIVE releases only)
 
 **Skip this step for PTU test builds.** Only needed when preparing a LIVE release.
 
@@ -180,7 +204,7 @@ cp .github/workflows/deploy-[OLD_VERSION]-[channel].yml .github/workflows/deploy
 
 Then update the version references, tag name, and paths inside the new YAML file.
 
-## Step 12: Commit and Push
+## Step 13: Commit and Push
 
 If not already on a feature branch, create one:
 ```bash
@@ -200,7 +224,7 @@ For **LIVE releases**: push immediately per repo rules:
 git push origin feature/[VERSION]-[channel]
 ```
 
-## Step 13: Create Release (LIVE releases only)
+## Step 14: Create Release (LIVE releases only)
 
 **Skip this step for PTU test builds.**
 
