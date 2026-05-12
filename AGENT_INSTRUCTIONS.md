@@ -82,18 +82,65 @@ The `Frontend_PU_Version` gets the stock version appended with ` - ScCompLangPac
 
 **Always check the stock INI to find the exact version string format** — PTU may not include the patch number (it may just say `4.8 - Tactical Strike`). `apply_manifest.py` handles appending the suffix automatically.
 
-### 4. Deploy & Release
-- Run `python scripts/install_to_ptu.py --channel [CHANNEL]` to copy the remixed global.ini into your game install at `[SC_BASE]/[CHANNEL]/data/Localization/english/`
-- Copy the `[CHANNEL]/user.cfg` from the repo into the game channel root folder — this enables the language pack to load (only the remix INI is installed by the script; user.cfg is a separate file)
+### 4. Deploy, Vet, Branch, and Release
+- Run `python scripts/install_to_ptu.py --channel [CHANNEL]` to copy the remixed global.ini into your game install at `[SC_BASE]/[CHANNEL]/data/Localization/english/` and copy `user.cfg` into the game channel root.
 - **Vetting**: Launch the game and verify:
   1. Main menu version string shows `[PATCH] - [TITLE] - ScCompLangPackRemix` (confirm branding is applied)
   2. Scan a ship and verify component names show compact prefixes (e.g., `M2A QuadraCell MT`)
   3. Check MFD ordnance tags display correctly (e.g., `IR Marksman I Missile`)
   4. Spot-check ground missiles and bombs in inventory/MFD
-- If anything looks wrong, compare the remix INI against the stock INI using `scripts/compare_ini.py` to identify what changed
+- If anything looks wrong, compare the remix INI against the stock INI using `scripts/compare_ini.py` to identify what changed.
 
-- Commit to a feature branch, merge to `main`.
-- Push to GitHub and create a Release/Pre-release via `create-release.yml` workflow.
+#### Feature Branch
+- After in-game vetting succeeds, create a feature branch before committing:
+  ```bash
+  git checkout -b [channel]-[patch]-remix
+  ```
+- Commit only relevant files:
+  - `[CHANNEL]/stock-global.ini`
+  - `[CHANNEL]/data/Localization/english/global.ini`
+  - `[CHANNEL]/user.cfg`
+  - `dry_run_manifest_[channel].csv` if changed
+  - workflow/tooling updates (`scripts/*`, `tools/unforge.exe`, `AGENT_INSTRUCTIONS.md`) if needed
+- Do **not** commit temporary extraction folders (`extracted_*`), backup binaries, or ad-hoc ZIPs unless explicitly requested.
+- Push the feature branch:
+  ```bash
+  git push -u origin [branch-name]
+  ```
+
+#### Release Type Rules
+- **PTU and HOTFIX builds are GitHub pre-releases.** Always use `--prerelease` for PTU/HOTFIX.
+- **LIVE builds are normal releases.** Do not use `--prerelease` for LIVE.
+- Tag/title format:
+  - PTU: `4.8.0-PTU`
+  - HOTFIX: `4.7.0-LIVE-HOTFIX`
+  - LIVE: `4.7.1-LIVE`
+
+#### Packaging
+- Build release ZIP from inside `[CHANNEL]/` so the ZIP root contains `data/` and `user.cfg` directly — **not** `[CHANNEL]/data`.
+  ```bash
+  cd [CHANNEL]
+  zip -r /tmp/ScCompLangPackRemix-[TAG].zip data user.cfg
+  ```
+- Verify ZIP structure before uploading:
+  ```bash
+  unzip -l /tmp/ScCompLangPackRemix-[TAG].zip | head
+  ```
+
+#### GitHub Release
+- Create a PTU/HOTFIX pre-release:
+  ```bash
+  gh release create [TAG] /tmp/ScCompLangPackRemix-[TAG].zip \
+    --target [branch-name] \
+    --title "[TAG]" \
+    --prerelease \
+    --notes "..."
+  ```
+- Create a LIVE release the same way but omit `--prerelease`.
+- Verify after creation:
+  ```bash
+  gh release view [TAG] --json url,name,tagName,isPrerelease,assets
+  ```
 
 ### 5. Cleanup (Crucial)
 - **Nuke Temporary Data**: The `extracted_*` folders can reach 5GB+.
