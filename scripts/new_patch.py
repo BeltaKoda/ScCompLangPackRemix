@@ -9,8 +9,8 @@ Usage:
     # Using a pre-downloaded stock INI:
     python scripts/new_patch.py --channel LIVE --stock-file /path/to/stock.ini
 
-    # Specify custom title bar branding:
-    python scripts/new_patch.py --channel LIVE --branding "4.7.0 LIVE - BeltaKoda's ScCompLangPackRemix"
+    # Force fresh DCB conversion and install after generation:
+    python scripts/new_patch.py --channel PTU --force-convert --install
 """
 
 import argparse
@@ -49,6 +49,9 @@ def main():
     parser.add_argument("--stock-file", type=Path, default=None, help="Path to pre-downloaded stock global.ini")
     parser.add_argument("--branding", default=None, help="Custom Frontend_PU_Version branding string")
     parser.add_argument("--skip-extract", action="store_true", help="Skip extraction (stock-global.ini must already exist)")
+    parser.add_argument("--force-convert", action="store_true", help="Delete existing extracted XMLs and rerun DCB conversion")
+    parser.add_argument("--skip-manifest", action="store_true", help="Skip manifest generation (manifest CSV must already exist)")
+    parser.add_argument("--install", action="store_true", help="Install generated remix and user.cfg into the game folder")
     args = parser.parse_args()
 
     old_channel = args.old_channel or args.channel
@@ -79,12 +82,24 @@ def main():
             sys.exit(1)
         print(f"Using existing stock INI: {stock_ini_path}")
 
-    # Step 2: Create directory structure
+    # Step 2: Generate fresh manifest from current Data.p4k
+    manifest_csv = REPO_ROOT / f"dry_run_manifest_{args.channel.lower()}.csv"
+    if not args.skip_manifest:
+        manifest_args = ["--channel", args.channel, "--manifest-csv", str(manifest_csv)]
+        if args.force_convert:
+            manifest_args.append("--force-convert")
+        if not run_script("dry_run_channel.py", manifest_args, "Step 2: Generate Fresh Manifest from DCB"):
+            print("FAILED: Manifest generation failed")
+            sys.exit(1)
+    elif not manifest_csv.exists():
+        print(f"ERROR: --skip-manifest used but {manifest_csv} does not exist")
+        sys.exit(1)
+
+    # Step 3: Create directory structure
     remix_path = get_remix_ini(args.channel)
     remix_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Step 3: Run apply_manifest.py (fresh from stock, no carry-forward)
-    manifest_csv = REPO_ROOT / "dry_run_manifest_ptu.csv"
+    # Step 4: Run apply_manifest.py (fresh from stock, no carry-forward)
     merge_args = [
         "--channel", args.channel,
         "--manifest-csv", str(manifest_csv),
@@ -130,12 +145,10 @@ def main():
     print(f"  user.cfg:    {get_channel_dir(args.channel) / 'user.cfg'}")
     print()
     print("Next steps:")
-    print("  1. Review new components — search for entries without remix prefixes")
-    print("  2. Run generate_manifest.py for a component overview")
-    print("  3. Manually remix new components (M/I/C/R/S + size + grade)")
-    print("  4. Verify with erkul.games or finder.cstone.space")
-    print("  5. Commit to feature branch and push")
-    print("  6. Create GitHub release via create-release.yml workflow")
+    print("  1. Launch the game and verify main menu branding")
+    print("  2. Spot-check component prefixes, MFD ordnance, ground missiles, and bombs")
+    print("  3. If testing passes, commit to a feature branch and push")
+    print("  4. Create GitHub release via create-release.yml workflow")
 
 
 if __name__ == "__main__":

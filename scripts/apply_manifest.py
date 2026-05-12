@@ -19,7 +19,7 @@ STOCK_INI = get_stock_ini(args.channel)
 MANIFEST_CSV = Path(args.manifest_csv) if args.manifest_csv else REPO_ROOT / "dry_run_manifest_ptu.csv"
 OUTPUT_INI = get_remix_ini(args.channel)
 
-BRANDING_VERSION = args.branding or f"{args.channel} - BeltaKoda's ScCompLangPackRemix"
+BRANDING_VERSION = args.branding or "ScCompLangPackRemix"
 
 def load_ini(path):
     data = {}

@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import get_repo_root, get_sc_install_path, get_remix_ini
+from config import get_repo_root, get_sc_install_path, get_remix_ini, get_channel_dir
 
 parser = argparse.ArgumentParser(description="Install remixed global.ini to Star Citizen game directory")
 parser.add_argument("--channel", default="LIVE", help="Channel to install to (LIVE, PTU, HOTFIX)")
@@ -36,6 +36,17 @@ def install():
 
         print(f"Copying {SOURCE_FILE} to {dest_path}...")
         shutil.copy2(SOURCE_FILE, dest_path)
+
+        channel_cfg = get_channel_dir(args.channel) / "user.cfg"
+        fallback_cfg = get_channel_dir("LIVE") / "user.cfg"
+        user_cfg_source = channel_cfg if channel_cfg.exists() else fallback_cfg
+        user_cfg_dest = sc_path / "user.cfg"
+        if user_cfg_source.exists():
+            print(f"Copying {user_cfg_source} to {user_cfg_dest}...")
+            shutil.copy2(user_cfg_source, user_cfg_dest)
+        else:
+            print(f"WARNING: user.cfg not found at {channel_cfg} or {fallback_cfg}; language pack may not load.")
+
         print("Installation successful!")
 
     except Exception as e:

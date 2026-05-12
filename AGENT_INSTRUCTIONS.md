@@ -32,20 +32,66 @@ The stock file is saved to `[CHANNEL]/stock-global.ini`.
 
 ### 3. Apply the Remix
 - **Do NOT** crawl Game.dcb unless absolutely necessary for a major mapping update.
-- Use the consolidated workflow script:
+- Generate a fresh component manifest from the current game files:
   ```bash
-  python scripts/new_patch.py --channel [CHANNEL]
+  python scripts/dry_run_channel.py --channel [CHANNEL] --force-convert
   ```
-- Or use `process-new-patch.py` directly:
-    - **Update Version**: Set `Frontend_PU_Version` to the new patch title + `- ScCompLangPackRemix`.
+  Use `--force-convert` for new patches to avoid accidentally reusing partial/stale XML output.
+- Apply the manifest:
+  ```bash
+  python scripts/apply_manifest.py --channel [CHANNEL] --manifest-csv dry_run_manifest_[channel].csv
+  ```
+    - **Update Version**: Append `- ScCompLangPackRemix` to the stock `Frontend_PU_Version`. Do not include the channel name (no `PTU`/`LIVE`) unless the user explicitly asks.
     - **Apply Prefix**: For all ship component keys, prepend `[Type][Size][Quality]`.
 - Ensure all other keys (MFDs, New missions, etc.) remain untouched from the original stock file.
 
+### 3.5 Naming Conventions
+
+The remix uses the compact format: **[Type][Size][Grade] ComponentName**
+
+#### Component Prefixes
+| Prefix | Category | Sizes | Grades |
+|--------|----------|-------|--------|
+| M | Military | 1-4 | A(1) B(2) C(3) D(4) |
+| I | Industrial | 1-2 | A(1) B(2) |
+| C | Civilian | 1-2 | A(1) B(2) |
+| R | Racing/Competition | 1-2 | A(1) B(2) |
+| S | Stealth | 1-2 | A(1) B(2) |
+
+#### Ordnance Prefixes
+| Prefix | Meaning |
+|--------|---------|
+| IR | Infrared Tracking |
+| EM | Electromagnetic Tracking |
+| CS | Cross-Section Tracking |
+| B[size] | Bomb (e.g., B10 for size 10) |
+| G-[tracking] | Ground Missile |
+
+#### Key Rules
+- **Weapons (WeaponGun, Turret, TurretBase)** are excluded from remixing — they keep their stock names
+- **Ordnance short keys** (MFD display names ending in `_short`) get the same prefix as their full names
+- **Ground Missiles** are handled via regex on `item_NameGMISL_*` keys — tracking inferred from key names (`_IR_`, `_EM_`, `_CS_`), size from `_S<N>_` pattern
+- **Mission items** (`mission_item_*`) get lowercased automatically by `apply_manifest.py`
+- **Custom fixes** exist for known CIG naming mismatches (e.g., `BroadspecLite` uses INI key size S01 but XML says S02)
+- If a key in the remix INI has no prefix, it wasn't in the manifest — check against the game to see if it needs manual treatment
+
+#### Branding Format
+The `Frontend_PU_Version` gets the stock version appended with ` - ScCompLangPackRemix`. Examples:
+- LIVE: `4.7.0 - Welcome to the Rock - ScCompLangPackRemix`
+- PTU: `4.8 - Tactical Strike - ScCompLangPackRemix`
+
+**Always check the stock INI to find the exact version string format** — PTU may not include the patch number (it may just say `4.8 - Tactical Strike`). `apply_manifest.py` handles appending the suffix automatically.
+
 ### 4. Deploy & Release
-- Install locally for testing:
-  ```bash
-  python scripts/install_to_ptu.py --channel [CHANNEL]
-  ```
+- Run `python scripts/install_to_ptu.py --channel [CHANNEL]` to copy the remixed global.ini into your game install at `[SC_BASE]/[CHANNEL]/data/Localization/english/`
+- Copy the `[CHANNEL]/user.cfg` from the repo into the game channel root folder — this enables the language pack to load (only the remix INI is installed by the script; user.cfg is a separate file)
+- **Vetting**: Launch the game and verify:
+  1. Main menu version string shows `[PATCH] - [TITLE] - ScCompLangPackRemix` (confirm branding is applied)
+  2. Scan a ship and verify component names show compact prefixes (e.g., `M2A QuadraCell MT`)
+  3. Check MFD ordnance tags display correctly (e.g., `IR Marksman I Missile`)
+  4. Spot-check ground missiles and bombs in inventory/MFD
+- If anything looks wrong, compare the remix INI against the stock INI using `scripts/compare_ini.py` to identify what changed
+
 - Commit to a feature branch, merge to `main`.
 - Push to GitHub and create a Release/Pre-release via `create-release.yml` workflow.
 
@@ -64,14 +110,84 @@ All scripts use `scripts/config.py` for centralized path detection:
 - Python 3.10+
 - `zstandard` for P4K extraction: `pip install zstandard`
 - `pycryptodome` only if extracting encrypted P4K entries (rare): `pip install pycryptodome`
-- `wine` for DCB-to-XML conversion (runs `tools/unforge.exe` via Wine)
+- `wine` for DCB-to-XML conversion (runs `tools/unforge.exe` via Wine). First Wine invocation on Linux may prompt for setup (~10-30s). Subsequent runs are faster.
+- The P4K reader is pure Python (just `zstandard`), so no Wine needed for stock INI extraction.
+- On Linux, SC install is auto-detected via LUG Helper Wine prefix at `~/Games/star-citizen/drive_c/Program Files/Roberts Space Industries/StarCitizen/`. Override in `config.ini` if needed.
 - Avoid using complex text editing tools on the 9MB `global.ini`; always use specific Python processing scripts to avoid truncation or encoding errors.
 - Always use `utf-8-sig` when reading/writing Star Citizen INI files.
 
-## Extraction Pipeline
-The component data extraction uses a two-stage pipeline:
-1. **P4K → DCB**: Built-in `scripts/p4k_reader.py` extracts Game2.dcb from Data.p4k (no external dependencies beyond zstandard)
-2. **DCB → XML**: `tools/unforge.exe` via Wine converts the DataForge binary to component XMLs
-3. **XML → Manifest CSV**: `scripts/dry_run_live.py` or `scripts/dry_run_ptu.py` parses the XMLs and generates the manifest
+## Task Tracking
 
-**Important**: Always extract fresh from the current game's Data.p4k before building a remix. CIG changes component types and metadata with each patch. Never rely on stale extracted data or static CSV files.
+Always use `todowrite` for multi-step workflows. When running in Claude Code CLI, use the native equivalent: `TaskCreate`, `TaskUpdate`, `TaskList`, and `TaskGet` (accessible via `/tasks` slash command).
+
+**Rules:**
+- Mark **exactly one** task as `in_progress` at any time
+- Mark `completed` immediately after finishing (do not batch completions)
+- Mark `in_progress` **before** starting a task, not after
+- Add new follow-up tasks as discovered during execution
+- Remove irrelevant tasks entirely (do not leave stale pending items)
+- Tasks persist across context compactions and sessions (stored in `~/.claude/tasks/` for Claude Code)
+
+**Status lifecycle:** `pending` → `in_progress` → `completed`
+
+**When to use:**
+- Complex multi-step pipelines (3+ steps) — always use for this workflow
+- User explicitly requests todo list
+- After receiving new instructions (capture requirements)
+- When starting work (plan first, track as you go)
+
+**When NOT to use:**
+- Single straightforward task
+- Trivial tasks providing no organizational benefit
+- Tasks completable in <3 trivial steps
+- Purely conversational/informational requests
+
+## Extraction Pipeline
+
+Full pipeline flow for each patch:
+
+```
+extract_stock_ini.py → dry_run_ptu.py → apply_manifest.py → remix INI
+     ↓                      ↓                      ↓
+  stock-global.ini    dry_run_manifest*.csv    [CHANNEL]/data/Localization/english/global.ini
+```
+
+### Step-by-step:
+
+1. **`scripts/extract_stock_ini.py --channel [CHANNEL]`**
+   - Reads `Data.p4k` via built-in `p4k_reader.py` (pure Python, just needs `zstandard`)
+   - Extracts `global.ini` from the P4K archive
+   - Saves to `[CHANNEL]/stock-global.ini`
+
+2. **`scripts/dry_run_channel.py --channel [CHANNEL] --force-convert`**
+   - **Extracts DCB**: Uses `p4k_reader.py` to pull `Game2.dcb` from `Data.p4k` → `extracted_[channel]/dcb/Data/`
+   - **Converts DCB→XML**: Runs `tools/unforge.exe` via Wine → outputs to `extracted_[channel]/dcb/Data/libs/foundry/records/`
+   - **Progress output**: Reports XML count every 30 seconds during long DCB conversion
+   - **Parses XMLs**: Reads all component XMLs, extracts `key/size/grade/type/tracking/path`
+   - **Generates manifest**: Writes `dry_run_manifest_[channel].csv`
+   - **Caching safety**: Existing XMLs are counted before reuse. If count is below the safety threshold (default 10,000), the script fails and tells you to rerun with `--force-convert`.
+
+3. **`scripts/apply_manifest.py --channel [CHANNEL] --manifest-csv dry_run_manifest_[channel].csv`**
+   - Loads stock INI → merges with manifest CSV → produces remixed INI
+   - Applies all naming prefixes from the Naming Conventions section above
+   - Handles ground missiles, mission items, custom fixes, and branding
+   - Output: `[CHANNEL]/data/Localization/english/global.ini`
+
+### Important Notes:
+- **Always regenerate the manifest** fresh from the current `Data.p4k`. CIG changes component metadata with each patch. Never reuse an old manifest CSV.
+- **PTU INI delimiter quirk**: PTU stock files use comma delimiters (`Key,Value`) while LIVE uses equals (`Key=Value`). The parsing in `apply_manifest.py` handles both via `line.split('=', 1)` — but if you manually edit stock files, be aware of the difference.
+- The `extracted_*` folders contain raw XMLs and can grow to 5GB+. Clean them up after the run (see Cleanup step).
+- If `unforge.exe` fails, check that Wine is installed and configured. On Linux, `wine --version` should return a version string.
+
+
+## 4.8+ DataForge/DCB v8 Lessons
+
+- Use `tools/unforge.exe` **v4.0.83 or newer**. Older v4.0.81 builds fail on DCB/DataForge v8.
+- Full 4.8 PTU DCB conversion via Wine took about **7 minutes** and produced **59,697 XML files**.
+- A partial conversion is dangerous: if only some XMLs exist, old scripts may skip conversion and generate a tiny manifest.
+- Symptom of partial extraction: manifest has ~27 rows instead of hundreds.
+- Healthy 4.8 PTU manifest from full extraction: **963 parsed rows** (964 CSV lines with header).
+- Always run new patch manifest generation with `--force-convert` unless you intentionally trust the existing extracted XML cache.
+- `unp4k_rs` was tested diagnostically against 4.8 PTU: it detected DataForge v8 and 114,467 records, but crashed during XML export. Do not use it as the primary path yet.
+- `dry_run_ptu.py` and `dry_run_live.py` are compatibility wrappers; prefer `dry_run_channel.py` for all channels.
+- Branding must be stock version + ` - ScCompLangPackRemix` only. Do not include `PTU`, `LIVE`, or old `BeltaKoda` branding unless explicitly requested.
