@@ -4,6 +4,10 @@
 ![GitHub pre-release (latest by date)](https://img.shields.io/github/v/release/BeltaKoda/ScCompLangPackRemix?include_prereleases&label=pre-release&color=orange)
 ![GitHub all releases](https://img.shields.io/github/downloads/BeltaKoda/ScCompLangPackRemix/total)
 
+> [!TIP]
+> **🌐 Live Mining Web App!**
+> Easily search, filter, and sort all in-game mining resources: **[beltakoda.github.io/ScCompLangPackRemix](https://beltakoda.github.io/ScCompLangPackRemix/)**
+
 > **📢 IMPORTANT:** This is a modified fork of the original [Component Language Pack by ExoAE](https://github.com/ExoAE/ScCompLangPack).
 > **All credit for the original language pack goes to [ExoAE](https://github.com/ExoAE).**
 > This remix was created using [Claude Code](https://claude.com/claude-code) to provide an alternative compact naming format.
@@ -92,7 +96,7 @@ Starting with patch 4.7.0, radars are now included in the remix using the same *
 
 ## ⬇️ Download and install
 
-**Download the latest version from the [Releases Page](https://github.com/joeydee1986/ScCompLangPackRemix/releases)**
+**Download the latest version from the [Releases Page](https://github.com/BeltaKoda/ScCompLangPackRemix/releases)**
 
 **Want the original format instead?** Check out [ExoAE's original pack](https://github.com/ExoAE/ScCompLangPack)
 
@@ -159,7 +163,7 @@ This enables tools and scripts to automatically fetch the latest version without
 If you notice any incorrectly formatted component names, missing conversions, or other issues, please let us know!
 
 **How to report:**
-- Open an issue on [GitHub Issues](https://github.com/joeydee1986/ScCompLangPackRemix/issues)
+- Open an issue on [GitHub Issues](https://github.com/BeltaKoda/ScCompLangPackRemix/issues)
 - Include the component name and what's wrong
 - Screenshots are super helpful!
 
@@ -168,7 +172,7 @@ We appreciate your help in making this pack better for everyone. Feel free to su
 ## Notes
 
 - This project is not affiliated with Cloud Imperium Games.
-- Using language packs is currently intended by Cloud Imperium Games. 
+- Using language packs is currently intended by Cloud Imperium Games.
 https://robertsspaceindustries.com/spectrum/community/SC/forum/1/thread/star-citizen-community-localization-update
 
 ## ☕ Support the Original Creator
