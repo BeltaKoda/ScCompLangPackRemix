@@ -4,46 +4,53 @@
 
 ## The "Magic" Workflow (Each Patch)
 
-When a new Star Citizen patch is released, follow these steps:
+When a new Star Citizen patch is released, the entire extraction, dry-run parsing, remixing, branding, comparison, and installation process is consolidated into a single unified script: `scripts/new_patch.py`.
 
-### 1. Ingest Stock Data
+### The Recommended Path (One-Command)
 
-**Automated (recommended):**
+Run the consolidated script with the appropriate channel (e.g. `LIVE` or `PTU`). If it's a major new patch, always use `--force-convert` to perform a fresh DCB-to-XML extraction:
+
+```bash
+python scripts/new_patch.py --channel LIVE --old-channel PTU --force-convert --branding "4.8.0 LIVE - BeltaKoda's ScCompLangPackRemix" --install
+```
+
+#### Key Flags:
+*   `--channel [CHANNEL]`: The target channel (`LIVE`, `PTU`, or `HOTFIX`).
+*   `--old-channel [OLD_CHANNEL]`: The previous channel (e.g. comparing `LIVE` against the recent `PTU` stock file to see stock differences).
+*   `--force-convert`: Deletes any old cache of extracted component XMLs and performs a fresh unforge/wine extraction. Crucial for major new patches!
+*   `--branding "[STRING]"`: Custom `Frontend_PU_Version` main menu branding override.
+*   `--install`: Automatically runs `scripts/install_to_ptu.py` to copy the compiled localization and configuration straight into your game installation directory.
+*   `--stock-file [/path/to/stock.ini]`: Allows using a pre-downloaded stock INI instead of reading it from `Data.p4k` (optional).
+
+---
+
+### Alternative: Step-by-Step Manual Sub-workflow
+
+If you need to run specific parts of the pipeline manually, the individual scripts are fully available:
+
+#### 1. Ingest Stock Data
 ```bash
 python scripts/extract_stock_ini.py --channel [CHANNEL]
 ```
-This extracts `global.ini` directly from the local `Data.p4k` file using the built-in P4K reader. Works on both Linux and Windows.
+This extracts `global.ini` from `Data.p4k` to `[CHANNEL]/stock-global.ini`.
 
-**Manual alternative:**
+#### 2. Generate Component Manifest
 ```bash
-python scripts/extract_stock_ini.py --channel [CHANNEL] --local-file /path/to/stock-global.ini
+python scripts/dry_run_channel.py --channel [CHANNEL] --force-convert
 ```
+This extracts `Game2.dcb` / `Game.dcb`, converts it to XML via `unforge.exe`, parses component metadata, and writes `dry_run_manifest_[channel].csv`.
 
-The stock file is saved to `[CHANNEL]/stock-global.ini`.
+#### 3. Apply the Remix
+```bash
+python scripts/apply_manifest.py --channel [CHANNEL] --manifest-csv dry_run_manifest_[channel].csv --branding "[BRANDING]"
+```
+Merges stock data with the parsed manifest and outputs `[CHANNEL]/data/Localization/english/global.ini`.
 
-### 2. Identify Changes
-- Use `scripts/compare_ini.py` to compare the new stock INI with the previous version's stock INI:
-  ```bash
-  python scripts/compare_ini.py [OLD_STOCK_PATH] [NEW_STOCK_PATH]
-  ```
-- **Check for**:
-    - New ship components/weapons (Look for `item_Name...` keys that aren't in your mapping).
-    - Changes to the main menu version string (`Frontend_PU_Version`).
-
-### 3. Apply the Remix
-- **Do NOT** crawl Game.dcb unless absolutely necessary for a major mapping update.
-- Generate a fresh component manifest from the current game files:
-  ```bash
-  python scripts/dry_run_channel.py --channel [CHANNEL] --force-convert
-  ```
-  Use `--force-convert` for new patches to avoid accidentally reusing partial/stale XML output.
-- Apply the manifest:
-  ```bash
-  python scripts/apply_manifest.py --channel [CHANNEL] --manifest-csv dry_run_manifest_[channel].csv
-  ```
-    - **Update Version**: Append `- ScCompLangPackRemix` to the stock `Frontend_PU_Version`. Do not include the channel name (no `PTU`/`LIVE`) unless the user explicitly asks.
-    - **Apply Prefix**: For all ship component keys, prepend `[Type][Size][Quality]`.
-- Ensure all other keys (MFDs, New missions, etc.) remain untouched from the original stock file.
+#### 4. Install Manually
+```bash
+python scripts/install_to_ptu.py --channel [CHANNEL]
+```
+Copies the generated files into the Star Citizen installation folder.
 
 ### 3.5 Naming Conventions
 
@@ -110,37 +117,50 @@ The `Frontend_PU_Version` gets the stock version appended with ` - ScCompLangPac
 
 #### Release Type Rules
 - **PTU and HOTFIX builds are GitHub pre-releases.** Always use `--prerelease` for PTU/HOTFIX.
-- **LIVE builds are normal releases.** Do not use `--prerelease` for LIVE.
 - Tag/title format:
   - PTU: `4.8.0-PTU`
   - HOTFIX: `4.7.0-LIVE-HOTFIX`
   - LIVE: `4.7.1-LIVE`
 
-#### Packaging
-- Build release ZIP from inside `[CHANNEL]/` so the ZIP root contains `data/` and `user.cfg` directly — **not** `[CHANNEL]/data`.
-  ```bash
-  cd [CHANNEL]
-  zip -r /tmp/ScCompLangPackRemix-[TAG].zip data user.cfg
-  ```
-- Verify ZIP structure before uploading:
-  ```bash
-  unzip -l /tmp/ScCompLangPackRemix-[TAG].zip | head
-  ```
+#### Packaging and Release (Strictly Automated via GitHub Actions)
 
-#### GitHub Release
-- Create a PTU/HOTFIX pre-release:
-  ```bash
-  gh release create [TAG] /tmp/ScCompLangPackRemix-[TAG].zip \
-    --target [branch-name] \
-    --title "[TAG]" \
-    --prerelease \
-    --notes "..."
-  ```
-- Create a LIVE release the same way but omit `--prerelease`.
-- Verify after creation:
-  ```bash
-  gh release view [TAG] --json url,name,tagName,isPrerelease,assets
-  ```
+> [!WARNING]
+> **Manual Release Creation and Local ZIP Packaging are STRICTLY FORBIDDEN.**
+> Always use the automated `.github/workflows/create-release.yml` GitHub Actions workflow. Manual compilation runs the risk of introducing path structure mismatches and tagging/prerelease inconsistencies.
+
+To publish a release:
+1. Ensure your feature branch (e.g. `remix/4.8-live`) is fully committed and pushed to GitHub.
+2. Trigger the GitHub Actions release workflow (`Create Release`) using one of the following methods:
+
+**Method A: Via the GitHub CLI (Recommended)**
+Run this terminal command:
+```bash
+gh workflow run create-release.yml --ref [branch-name] -f version=[version] -f environment=[ENVIRONMENT]
+```
+*Example for LIVE*:
+```bash
+gh workflow run create-release.yml --ref remix/4.8-live -f version=4.8.0 -f environment=LIVE
+```
+*Example for PTU*:
+```bash
+gh workflow run create-release.yml --ref remix/4.8-live -f version=4.8.0 -f environment=PTU
+```
+
+**Method B: Via the GitHub Web UI**
+1. Navigate to the repository page on GitHub.
+2. Click the **Actions** tab.
+3. Select the **Create Release** workflow from the left sidebar.
+4. Click **Run workflow**, choose your branch (e.g. `remix/4.8-live`), fill in the version (e.g. `4.8.0`) and environment (e.g., `LIVE`), and click **Run workflow**.
+
+#### Verification
+Once the GitHub Action runs, monitor its progress:
+```bash
+gh run list --workflow=create-release.yml
+```
+Verify the completed release and download asset:
+```bash
+gh release view [TAG] --json url,name,tagName,isPrerelease,assets
+```
 
 ### 5. Cleanup (Crucial)
 - **Nuke Temporary Data**: The `extracted_*` folders can reach 5GB+.

@@ -136,6 +136,12 @@ def main():
             run_script("compare_ini.py", [str(old_stock_path), str(stock_ini_path)],
                         "Step 3: Compare Stock INI Changes")
 
+    # Step 6: Install generated files if requested
+    if args.install:
+        if not run_script("install_to_ptu.py", ["--channel", args.channel], "Step 6: Install Remix to Game Folder"):
+            print("FAILED: Installation to game folder failed")
+            sys.exit(1)
+
     # Summary
     print(f"\n{'=' * 60}")
     print("  DONE! Summary")
