@@ -256,5 +256,4 @@ extract_stock_ini.py → dry_run_ptu.py → apply_manifest.py → remix INI
 - Healthy 4.8 PTU manifest from full extraction: **963 parsed rows** (964 CSV lines with header).
 - Always run new patch manifest generation with `--force-convert` unless you intentionally trust the existing extracted XML cache.
 - `unp4k_rs` was tested diagnostically against 4.8 PTU: it detected DataForge v8 and 114,467 records, but crashed during XML export. Do not use it as the primary path yet.
-- `dry_run_ptu.py` and `dry_run_live.py` are compatibility wrappers; prefer `dry_run_channel.py` for all channels.
 - Branding must be stock version + ` - ScCompLangPackRemix` only. Do not include `PTU`, `LIVE`, or old `BeltaKoda` branding unless explicitly requested.

@@ -62,8 +62,7 @@ Verify the output: `[CHANNEL]/stock-global.ini` should exist and contain key=val
 The extraction pipeline uses the built-in P4K reader + Wine/unforge.exe:
 
 ```bash
-python scripts/dry_run_live.py    # For LIVE channel
-python scripts/dry_run_ptu.py     # For PTU channel
+python scripts/dry_run_channel.py --channel LIVE --force-convert
 ```
 
 This runs three steps:
@@ -95,13 +94,9 @@ The remix is **never** based on the previous version's remix — it always start
 
 Update `Frontend_PU_Version` with the confirmed branding string.
 
-**Note**: The INI key has a `,P` suffix: `Frontend_PU_Version,P=`. Use the update script with a substring match on `--old-string` and the full replacement line on `--new-string`:
-```bash
-python scripts/update_version_string.py \
-  --file [VERSION]/[CHANNEL]/data/Localization/english/global.ini \
-  --old-string "Frontend_PU_Version,P=" \
-  --new-string "Frontend_PU_Version,P=[CONFIRMED_BRANDING]"
-```
+**Note**: `apply_manifest.py` handles branding automatically via its `--branding` flag. You can also pass `--branding` to `new_patch.py`.
+
+To manually edit the branding, grep for `Frontend_PU_Version` in the output INI and update the value directly.
 
 Or grep for the line and edit it directly in the output INI.
 
@@ -184,14 +179,9 @@ python scripts/install_to_ptu.py --version [VERSION] --channel [CHANNEL]
 
 This copies the merged `global.ini` into the SC game directory so the user can launch and verify in-game.
 
-## Step 11: Generate Manifest (Optional)
+## Step 11: Review Manifest (Optional)
 
-If the user wants a component manifest document:
-```bash
-python scripts/generate_manifest.py --version [VERSION] --channel [CHANNEL]
-```
-
-This creates `component_manifest_[VERSION]_[channel].md` with a table of all components and their remix status.
+The manifest CSV (`dry_run_manifest_[channel].csv`) generated in Step 4 contains a full table of all components and their metadata. Review it to verify component coverage.
 
 ## Step 12: Create GitHub Deploy Workflow (LIVE releases only)
 

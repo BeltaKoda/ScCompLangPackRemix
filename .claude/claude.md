@@ -28,13 +28,12 @@ When a new Star Citizen patch is deployed, a new `global.ini` file is released b
 
 **Process for updating to a new patch:**
 
-1. **Obtain new stock global.ini**: Extract the stock `global.ini` from the new patch's Data.p4k file
-2. **Save stock ini to repo**: Copy to `/[CHANNEL]/stock-global.ini` for reference
-3. **Run processing script**: Use `process-new-patch.py` to:
-   - Preserve all existing remixed component names from the current version
-   - Add new components in stock format (to be remixed manually or in future updates)
-   - Remove components that no longer exist in the game
-4. **Manual remixing**: Review new components and apply remix format where metadata is available
+Use `scripts/new_patch.py` — the consolidated workflow that handles extraction, manifest generation, remixing, and installation in one command:
+```bash
+python scripts/new_patch.py --channel LIVE --force-convert --install
+```
+
+See [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) for full details and flags.
 
 **Important Notes:**
 - When comparing components, match by ini KEY (e.g., `item_NameCOOL_AEGS_S01_Bracer`), not by component name
